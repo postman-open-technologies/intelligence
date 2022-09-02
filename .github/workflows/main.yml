@@ -25,7 +25,7 @@ jobs:
         uses: postman-open-technologies/intelligence@main
         with:
             args: zip -qq -r m-s-apis-g.zip apis/get/index.js node_modules
-      - name: videos get lambda deploy
+      - name: intelligence get lambda deploy
         uses: appleboy/lambda-action@master
         with:
             aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
@@ -37,7 +37,7 @@ jobs:
         uses: postman-open-technologies/intelligence@main
         with:
             args: zip -qq -r m-s-apis-po.zip apis/post/index.js node_modules
-      - name: videos get lambda deploy
+      - name: intelligence get lambda deploy
         uses: appleboy/lambda-action@master
         with:
             aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
@@ -49,7 +49,7 @@ jobs:
         uses: postman-open-technologies/intelligence@main
         with:
             args: zip -qq -r m-s-apis-api-g.zip apis/api_id/get/index.js node_modules
-      - name: videos get lambda deploy
+      - name: intelligence get lambda deploy
         uses: appleboy/lambda-action@master
         with:
             aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
@@ -61,7 +61,7 @@ jobs:
         uses: postman-open-technologies/intelligence@main
         with:
             args: zip -qq -r m-s-apis-api-pu.zip apis/api_id/put/index.js node_modules
-      - name: videos get lambda deploy
+      - name: intelligence get lambda deploy
         uses: appleboy/lambda-action@master
         with:
             aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
@@ -73,7 +73,7 @@ jobs:
         uses: postman-open-technologies/intelligence@main
         with:
             args: zip -qq -r m-s-apis-api-d.zip apis/api_id/delete/index.js node_modules
-      - name: videos get lambda deploy
+      - name: intelligence get lambda deploy
         uses: appleboy/lambda-action@master
         with:
             aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
@@ -81,3 +81,15 @@ jobs:
             aws_region: us-west-1
             function_name: m-s-apis-api-d
             zip_file: m-s-apis-api-d.zip          
+      - name: /apis/batch post lambda deploy zip
+        uses: postman-open-technologies/intelligence@main
+        with:
+            args: zip -qq -r m-s-apisbatch-po.zip apis/batch/post/index.js node_modules
+      - name: intelligence get lambda deploy
+        uses: appleboy/lambda-action@master
+        with:
+            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
+            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+            aws_region: us-west-1
+            function_name: m-s-apisbatch-po
+            zip_file: m-s-apisbatch-po.zip            
