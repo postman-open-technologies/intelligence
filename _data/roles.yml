@@ -1,0 +1,83 @@
+---
+- name: Advocate
+  description: Someone involved withe evangelizing, advocating, and championing APIs
+    inside or outside of the enterprise, helping bring more attention and awareness
+    with consumers.
+  collection_id: 12959542-39da5d9a-4d52-4cf9-875e-8db9f937dc98
+- name: Architect
+  description: A software development expert who makes high-level design choices and
+    tries to enforce technical standards, including software coding standards, tools,
+    and platforms.
+  collection_id: 12959542-ac82c57e-3ddd-45b0-b485-a45039264de9
+- name: Backend
+  description: Developers and other stakeholders who are involved in managing, delivering,
+    and connecting APIs and applications to a variety of backend systems and databases.
+  collection_id: 12959542-acd12502-f278-4b76-81fb-237841e0da49
+- name: CEO
+  description: A chief executive officer (CEO) is the highest-ranking executive in a company, who is making major corporate decisions, managing the overall operations and resources of a company, acting as the main point of communication between the board of directors and corporate operations.
+- name: CIO
+  description: Chief information officer (CIO), chief digital information officer
+    (CDIO) or information technology (IT) director, is a job title commonly given
+    to the most senior executive in an enterprise who works with information technology
+    and computer systems, in order to support enterprise goals.
+  collection_id: 12959542-20783ed4-f476-4877-bfbe-ec10423ab272
+- name: CISO
+  description: A chief information security officer is the senior-level executive
+    within an organization responsible for establishing and maintaining the enterprise
+    vision, strategy, and program to ensure information assets and technologies are
+    adequately protected.
+  collection_id: 12959542-dcdc67f5-107f-41aa-9215-e17ebccee350
+- name: CTO
+  description: A chief technical officer, also known as a chief technology officer
+    or chief technologist, is an executive-level position in a company or other entity
+    whose occupation is focused on the scientific and technological issues within
+    an organization.
+  collection_id: 12959542-7a92c1e1-6951-41cf-ab37-7825dd961e0a
+- name: Data
+  description: Data analysts, scientists, and anyone who works with data to make it
+    more usable across the enterprise, putting data to work from APIs to help the
+    business.
+  collection_id: 12959542-7c350333-20a7-4972-88fc-b1dde924aec8
+- name: Operations
+  description: Individuals who are working to shorten the systems development life
+    cycle and provide continuous delivery with high software quality across many different
+    teams.
+  collection_id: 12959542-27cd6bf1-bde1-4967-9e46-c76080bb5ed0
+- name: Engineering
+  description: Directors, managers, and the leadership involved in the engineering
+    behind APIs and applications, providing the leadership needed to move technology
+    forward.
+  collection_id: 12959542-b48e1c7e-43fd-4de5-821b-b5e20519f3d0
+- name: Frontend
+  description: Frontend and other stakeholders who are delivering web applications,
+    using APIs to deliver the resources and capabilities they need to power their
+    applications.
+  collection_id: 12959542-803a6d29-e399-4eed-9d84-a1f96165abfe
+- name: Mobile
+  description: Developers and other stakeholders who are delivering mobile applications,
+    using APIs to deliver the resources and capabilities they need to power their
+    applications.
+  collection_id: 12959542-c94e07c0-7ad6-46d0-8382-b5eb4aca858c
+- name: Product
+  description: A manager, director, or other stakeholder involved with the design
+    and delivery of products being sold to consumers.
+  collection_id: 12959542-111a66fe-a69d-4961-bf01-b1d1d4e919d2
+- name: Sales
+  description: Anyone involved in the sales and outreach around a platform, product,
+    or services, ensuring that customers have what they need when making a purchase
+    decision.
+  collection_id: 12959542-d52d231d-b455-44a4-97ca-d866ff21833d
+- name: Security
+  description: Individuals who are involved with ensuring APIs and applications are
+    secure and free from vulnerabilities, helping ensure APIs from across teams are
+    as secure as possible.
+  collection_id: 12959542-a0fd87f2-01aa-4204-9548-9dc93f50a711
+- name: Support
+  description: THose who are helping support an API, being the technical or business
+    support for consumers who are onboarding and putting an API to work.
+  collection_id: 12959542-51e40d5c-adce-4e24-89f8-8c51007470fb
+- name: Writer
+  description: A technical writer, marketer, advocacy, and other individuals who are
+    involved in writing content that helps support the onboarding and integration
+    with APIs.
+  collection_id: 12959542-ecc5711a-aa42-4078-af4b-5cccd5891334

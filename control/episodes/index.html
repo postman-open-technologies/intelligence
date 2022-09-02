@@ -1,0 +1,2832 @@
+---
+layout: default
+title: Admin - Episodes
+---
+
+<div class="container" style="padding-top: 70px;">
+	<div class="row align-top">
+		<div class="row">
+			<script>
+				function changeToken(t){
+					Cookies.set('token',t)
+				}
+			</script>
+			<div class="col">				
+				<input type="text" class="form-control" id="token" name="token" value="{{ site.token }}" placeholder="Token" onchange="changeToken();">
+			</div>
+			<div class="col-2">				
+				<input type="text" class="form-control" id="search" name="search" value="" placeholder="Search">
+			</div>	
+			<div class="col-2">				
+				<input type="text" class="form-control" id="tags" name="tags" value="" placeholder="tag,tag,tag">
+			</div>					
+			<label for="page" class="col-sm-2 col-form-label" style="text-align:right; width: 50px;">Page:</label>
+			<div class="col">				
+				<input type="text" class="form-control" id="page" name="page" value="0" style="text-align: center;">
+			</div>	
+			<label for="limit" class="col-sm-2 col-form-label" style="text-align:right; width: 50px;">Limit:</label>
+			<div class="col">				
+				<input type="text" class="form-control" id="limit" name="limit" value="10" style="text-align: center;">
+			</div>								
+			<div class="col">
+				<input type="button" class="btn btn-primary" name="listepisodes" id="listepisodes" value="Search" onclick="listEpisodes();">
+			</div>
+			<div class="col">
+				<input type="button" class="btn btn-success" name="show" value="Add" onclick="openAddEpisodeModal();">
+			</div>			
+		</div>								
+		<script>
+
+			var search = getUrlVar('search');
+			document.getElementById('search').value = search;
+
+			var token = getUrlVar('token');				
+			console.log("token:" + token);
+			if(token){
+				document.getElementById('token').value = token;		
+				changeToken(token);
+			}
+
+			var stored_token = Cookies.get('token');
+			if(stored_token){
+				console.log("stored_token:" + stored_token);
+				document.getElementById('token').value = stored_token;	
+			}
+
+			var input = document.getElementById("search");
+			input.addEventListener("keyup", function(event) {
+			  if (event.keyCode === 13) {
+				event.preventDefault();
+				document.getElementById("listepisodes").click();
+			  }
+			});	
+			var input = document.getElementById("tags");
+			input.addEventListener("keyup", function(event) {
+			  if (event.keyCode === 13) {
+				event.preventDefault();
+				document.getElementById("listepisodes").click();
+			  }
+			});	
+		</script>        
+		<div class="accordion" id="episodeAccordian" style="margin-top: 15px;"></div>
+
+		<script>
+
+			const episode_base_url = '{{ site.episodes_base_url }}';
+
+		 	token = document.getElementById("token").value;	
+
+			function autocomplete(inp, arr) {
+				/*the autocomplete function takes two arguments,
+				the text field element and an array of possible autocompleted values:*/
+				var currentFocus;
+				/*execute a function when someone writes in the text field:*/
+				inp.addEventListener("input", function(e) {
+					var a, b, i, val = this.value;
+					/*close any already open lists of autocompleted values*/
+					closeAllLists();
+					if (!val) { return false;}
+					currentFocus = -1;
+					/*create a DIV element that will contain the items (values):*/
+					a = document.createElement("DIV");
+					a.setAttribute("id", this.id + "autocomplete-list");
+					a.setAttribute("class", "autocomplete-items");
+					/*append the DIV element as a child of the autocomplete container:*/
+					this.parentNode.appendChild(a);
+					/*for each item in the array...*/
+					for (i = 0; i < arr.length; i++) {
+					/*check if the item starts with the same letters as the text field value:*/
+					//console.log(arr[i]);
+					if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
+						/*create a DIV element for each matching element:*/
+						b = document.createElement("DIV");
+						/*make the matching letters bold:*/
+						b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+						b.innerHTML += arr[i].substr(val.length);
+						/*insert a input field that will hold the current array item's value:*/
+						b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+						/*execute a function when someone clicks on the item value (DIV element):*/
+							b.addEventListener("click", function(e) {
+							/*insert the value for the autocomplete text field:*/
+							//console.log("HERE:" + this.getElementsByTagName("input")[0].value);
+							inp.value = this.getElementsByTagName("input")[0].value;
+							/*close the list of autocompleted values,
+							(or any other open lists of autocompleted values:*/
+							closeAllLists();
+							addExistingElement();
+						});
+						a.appendChild(b);
+					}
+					}
+				});
+				/*execute a function presses a key on the keyboard:*/
+				inp.addEventListener("keydown", function(e) {
+					var x = document.getElementById(this.id + "autocomplete-list");
+					if (x) x = x.getElementsByTagName("div");
+					if (e.keyCode == 40) {
+					/*If the arrow DOWN key is pressed,
+					increase the currentFocus variable:*/
+					currentFocus++;
+					/*and and make the current item more visible:*/
+					addActive(x);
+					} else if (e.keyCode == 38) { //up
+					/*If the arrow UP key is pressed,
+					decrease the currentFocus variable:*/
+					currentFocus--;
+					/*and and make the current item more visible:*/
+					addActive(x);
+					} else if (e.keyCode == 13) {
+					/*If the ENTER key is pressed, prevent the form from being submitted,*/
+					e.preventDefault();
+					if (currentFocus > -1) {
+						/*and simulate a click on the "active" item:*/
+						if (x) x[currentFocus].click();
+					}
+					}
+				});
+				function addActive(x) {
+				/*a function to classify an item as "active":*/
+				if (!x) return false;
+				/*start by removing the "active" class on all items:*/
+				removeActive(x);
+				if (currentFocus >= x.length) currentFocus = 0;
+				if (currentFocus < 0) currentFocus = (x.length - 1);
+				/*add class "autocomplete-active":*/
+				x[currentFocus].classList.add("autocomplete-active");
+				}
+				function removeActive(x) {
+				/*a function to remove the "active" class from all autocomplete items:*/
+				for (var i = 0; i < x.length; i++) {
+					x[i].classList.remove("autocomplete-active");
+				}
+				}
+				function closeAllLists(elmnt) {
+				/*close all autocomplete lists in the document,
+				except the one passed as an argument:*/
+				var x = document.getElementsByClassName("autocomplete-items");
+				for (var i = 0; i < x.length; i++) {
+					if (elmnt != x[i] && elmnt != inp) {
+					x[i].parentNode.removeChild(x[i]);
+				}
+				}
+			}
+			/*execute a function when someone clicks in the document:*/
+			document.addEventListener("click", function (e) {
+				closeAllLists(e.target);
+			});
+			} 			
+
+			function listElements(){
+
+				const options = {
+					method: 'get',
+					headers: {
+						"Content-Type": "application/json",
+						"x-api-key": token,
+					}
+				};		
+
+				fetch(elements_base_url + '/elements?limit=1000&page=0',options)
+					.then(function(response) {
+						if (!response.ok) {
+							console.log('Error with Status Code: ' + response.status);
+							return;
+						}
+						response.json().then(function(data) {	
+							if(data){
+								var all_elements = [];
+								for (let i = 0; i < data.length; i++) {	
+									all_elements.push(data[i].name);
+								}		
+							document.getElementById("element-store").value = JSON.stringify(data, null, 2);
+							autocomplete(document.getElementById("add-element-name"), all_elements);	
+							}																				 
+						});
+					})
+					.catch(function(err) {
+						console.log('Error: ' + err);
+				});
+
+				}				
+													
+				
+				function listQuotes(id){
+
+					const options = {
+						method: 'get',
+						headers: {
+							"Content-Type": "application/json",
+							"x-api-key": token,
+						}
+					};		
+
+					fetch(episode_base_url + '/episodes/' + id + '/quotes?limit=1000&page=0',options)
+						.then(function(response) {
+							if (!response.ok) {
+								console.log('Error with Status Code: ' + response.status);
+								return;
+							}
+							response.json().then(function(data) {	
+								if(data){
+									var all_quotes = [];
+									for (let i = 0; i < data.length; i++) {	
+										all_quotes.push(data[i].text);
+									}		
+								document.getElementById("quote-store").value = JSON.stringify(data, null, 2);
+								autocomplete(document.getElementById("add-quote-name"), all_quotes);	
+								}																				 
+							});
+						})
+						.catch(function(err) {
+							console.log('Error: ' + err);
+					});
+
+					}					
+
+			function listClips(id){
+
+				const options = {
+					method: 'get',
+					headers: {
+						"Content-Type": "application/json",
+						"x-api-key": token,
+					}
+				};		
+
+				fetch(episode_base_url + '/clips?limit=50&page=0',options)
+					.then(function(response) {
+						if (!response.ok) {
+							console.log('Error with Status Code: ' + response.status);
+							return;
+						}
+						response.json().then(function(data) {
+							var rows = '';
+							rows += '<option value="">Clip</option>';
+							var all_clips = [];
+							if(data){								
+								for (let i = 0; i < data.length; i++) {	
+									rows += '<option value="' + data[i].title + '">' + data[i].title + '</option>';
+									all_clips.push(data[i].name);
+								}								
+							}
+							document.getElementById('clip').innerHTML = rows;	
+							document.getElementById("clip-store").value = JSON.stringify(data, null, 2);
+							autocomplete(document.getElementById("add-clip-name"), all_clips);
+
+						});
+					})
+					.catch(function(err) {
+						console.log('Error: ' + err);
+				});
+
+				}			
+
+				function updateEpisodeQuoteRowField(u){
+
+					var ua = u.id.split("~");
+					var field = ua[2];
+					var id = ua[3];
+
+					var text = document.getElementById('episode~quote~text~' + id).value;
+
+					var postData = {};
+					postData.name = name;
+					postData.description = description;
+
+					delete postData.id;
+					var options = {
+							method: "PUT",
+							headers: {
+							"Content-Type": "application/json",
+							"x-api-key": token
+							},
+							body: JSON.stringify(postData)
+						};
+
+					fetch(episode_base_url + '/quotes/' + id,options)
+						.then(function(response) {
+							console.log("Updated!");
+						})
+						.catch(function(err) {
+							console.log('Error: ' + err);
+					});				
+
+					}				
+
+				function deleteQuote(e_id,v_id){
+
+					var options = {
+							method: "DELETE",
+							headers: {
+							"Content-Type": "application/json",
+							"x-api-key": token
+							}
+						};
+					console.log(episode_base_url + '/episodes/' + e_id + '/quotes/' + v_id);
+					fetch(episode_base_url + '/episodes/' + e_id + '/quotes/' + v_id,options)
+						.then(function(response) {
+							console.log("DELETED!");	
+							listEpisodeQuotes(e_id)
+						})
+						.catch(function(err) {
+							console.log('Error: ' + err);
+					});	
+
+					}	
+
+				function addQuote(){
+
+					var e_id = document.getElementById('add-quote-episode-id').value;
+					var text = document.getElementById('add-quote-text').value;
+
+					var postData = {};
+					postData.text = text;
+
+					var options = {
+							method: "POST",
+							headers: {
+							"Content-Type": "application/json",
+							"x-api-key": token
+							},
+							body: JSON.stringify(postData)
+						};
+
+					fetch(episode_base_url + '/episodes/' + e_id + '/quotes',options)
+						.then(function(response) {
+							response.json().then(function(data) {
+							
+							console.log("----");
+							console.log(data);
+							console.log("----");
+
+							var postData = {};
+							postData.name = name;
+							postData.id = data.id;
+
+							var options = {
+									method: "POST",
+									headers: {
+									"Content-Type": "application/json",
+									"x-api-key": token
+									},
+									body: JSON.stringify(postData)
+								};
+							
+							console.log(episode_base_url + '/episodes/' + e_id + '/quotes');
+							console.log(options);
+
+							fetch(episode_base_url + '/episodes/' + e_id + '/quotes',options)
+								.then(function(response) {
+									response.json().then(function(data) {
+									//console.log(data);
+									listEpisodeQuotes(e_id);
+								});
+								})
+								.catch(function(err) {
+									console.log('Error: ' + err);
+							});	
+
+						});
+						})
+						.catch(function(err) {
+							console.log('Error: ' + err);
+					});	
+
+					$("#addQuote").modal('hide');	
+
+					}						
+
+				function episodeQuotesRow(e_id,row){
+
+					var html = '';
+					html += '<table style="border: 0px solid #000; width: 100%;">';				
+					html += '<tr>';
+					html += '<td width="15%" align="right"><strong>Text:</strong></td>';
+					html += '<td width="75%"><textarea class="form-control" onchange="updateEpisodeQuoteRowField(this);" id="episode~quote~text~' + row.id + '" rows="3">' + row.text + '</textarea></td>';
+					html += '<td width="15%"><input type="button" class="btn btn-danger" name="delete" value="DELETE" onclick="if (confirm(' + "'" + 'Are you sure you want to delete?' + "'" + ') == true) { deleteQuote(' + e_id + ',' + row.id + ') }" style="width: 125px;"></td>';
+					html += '</tr>';
+					html += '</table>';	
+					html += '<hr>';
+
+					return html;
+					}	
+
+				function listEpisodeQuotes(e_id){
+						const options = {
+							method: 'get',
+							headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token,
+							}
+						};		
+
+						fetch(episode_base_url + '/episodes/' + e_id + '/quotes',options)
+							.then(function(response) {
+								if (!response.ok) {
+									console.log('Error with Status Code: ' + response.status);
+									return;
+								}
+								response.json().then(function(data) {
+									var rows = '';
+									if(data){
+										var rows = '<center><table style="border: 0px solid #000; width: 80%;">';
+										//console.log(data);
+										if(data.length == 0){
+												rows += '<tr><td><p align="center">No Quotes</p></td></tr>';
+											}
+										else{										
+											for (let i = 0; i < data.length; i++) {
+												rows += episodeQuotesRow(e_id,data[i]);
+											}
+										}
+										rows += '</table></center>';
+										document.getElementById("quote-list~" + e_id).innerHTML = rows;							
+									}
+								});
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});
+
+						}	
+						
+
+					function updateEpisodeClipRowField(u){
+
+						var ua = u.id.split("~");
+						var field = ua[2];
+						var id = ua[3];
+
+						var title = document.getElementById('episode~clip~title~' + id).value;
+						var transcript = document.getElementById('episode~clip~transcript~' + id).value;
+						var video_url = document.getElementById('episode~clip~video_url~' + id).value;
+						var video_embed = document.getElementById('episode~clip~video_embed~' + id).value;												
+
+						var postData = {};
+						postData.title = title;
+						postData.transcript = transcript;
+						postData.video_url = video_url;
+						postData.video_embed = video_embed;						
+
+						delete postData.id;
+						var options = {
+								method: "PUT",
+								headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token
+								},
+								body: JSON.stringify(postData)
+							};
+
+						fetch(episode_base_url + '/episodes/' + id + '/clips/' + id,options)
+							.then(function(response) {
+								console.log("Updated!");
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});				
+
+						}				
+
+						function deleteClip(e_id,v_id){
+
+						var options = {
+								method: "DELETE",
+								headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token
+								}
+							};
+						console.log(episode_base_url + '/episodes/' + e_id + '/clips/' + v_id);
+						fetch(episode_base_url + '/episodes/' + e_id + '/clips/' + v_id,options)
+							.then(function(response) {
+								console.log("DELETED!");	
+								listEpisodeClips(e_id)
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});	
+
+						}	
+
+						function addClip(){							
+
+						var e_id = document.getElementById('add-clip-episode-id').value;
+						var title = document.getElementById('add-clip-title').value;
+						var transcript = document.getElementById('add-clip-transcript').transcript;
+						var video_url = document.getElementById('add-clip-video_url').video_url;
+						var video_embed = document.getElementById('add-clip-video_embed').video_embed;
+
+						var postData = {};
+						postData.title = title;
+						postData.transcript = transcript;
+						postData.video_url = video_url;
+						postData.video_embed = video_embed;
+
+						var options = {
+								method: "POST",
+								headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token
+								},
+								body: JSON.stringify(postData)
+							};
+
+						fetch(episode_base_url + '/episodes/' + e_id + '/clips',options)
+							.then(function(response) {
+								response.json().then(function(data) {
+								
+								console.log("----");
+								console.log(data);
+								console.log("----");
+
+								var postData = {};
+								postData.name = name;
+								postData.id = data.id;
+
+								var options = {
+										method: "POST",
+										headers: {
+										"Content-Type": "application/json",
+										"x-api-key": token
+										},
+										body: JSON.stringify(postData)
+									};
+								
+								console.log(episode_base_url + '/episodes/' + e_id + '/clips');
+								console.log(options);
+
+								fetch(episode_base_url + '/episodes/' + e_id + '/clips',options)
+									.then(function(response) {
+										response.json().then(function(data) {
+										//console.log(data);
+										listEpisodeClips(e_id);
+									});
+									})
+									.catch(function(err) {
+										console.log('Error: ' + err);
+								});	
+
+							});
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});	
+
+						$("#addClip").modal('hide');	
+
+						}						
+
+						function episodeClipsRow(e_id,row){
+
+						var html = '';	
+						html += '<table style="border: 0px solid #000; width: 100%;">';			
+						html += '<tr>';
+						html += '<td width="15%"><strong>Title:</strong></td>';	
+						html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeClipRowField(this);" class="form-control" id="episode~clip~title~' + row.id + '" placeholder="" value="' + row.title + '"></td>';
+						html += '</tr>';
+						html += '<tr>';
+						html += '<td width="15%"><strong>Transcript:</strong></td>';							
+						html += '<td><textarea style="height: 200px;" class="form-control" onchange="updateEpisodeClipRowField(this);" id="episode~clip~transcript~' + row.id + '" rows="3">' + row.transcript + '</textarea></td>';
+						html += '</tr>';
+						html += '<tr>';
+						html += '<td width="15%"><strong>Video URL:</strong></td>';	
+						html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeClipRowField(this);" class="form-control" id="episode~clip~video_url~' + row.id + '" placeholder="" value="' + row.video_url + '"></td>';
+						html += '</tr>';
+						html += '<tr>';
+						html += '<td width="15%"><strong>Video Embed:</strong></td>';	
+						html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeClipRowField(this);" class="form-control" id="episode~clip~video_embed~' + row.id + '" placeholder="" value="' + row.video_embed + '"></td>';
+						html += '</tr>';												
+						html += '<tr>';
+						html += '<td width="15%"></td>';	
+						html += '<td align="left"><input type="button" class="btn btn-danger" name="delete" value="DELETE" onclick="if (confirm(' + "'" + 'Are you sure you want to delete?' + "'" + ') == true) { deleteClip(' + e_id + ',' + row.id + ') }" style="width: 125px;"></td>';
+						html += '</tr>';	
+						html += '</table>';
+						html += '<hr>';						
+
+						return html;
+						}	
+
+						function listEpisodeClips(e_id){
+							const options = {
+								method: 'get',
+								headers: {
+									"Content-Type": "application/json",
+									"x-api-key": token,
+								}
+							};		
+
+							fetch(episode_base_url + '/episodes/' + e_id + '/clips',options)
+								.then(function(response) {
+									if (!response.ok) {
+										console.log('Error with Status Code: ' + response.status);
+										return;
+									}
+									response.json().then(function(data) {
+										var rows = '';
+										if(data){
+											var rows = '<center><table style="border: 0px solid #000; width: 80%;">';
+											//console.log(data);
+											if(data.length == 0){
+													rows += '<tr><td><p align="center">No Clips</p></td></tr>';
+												}
+											else{										
+												for (let i = 0; i < data.length; i++) {
+													rows += episodeClipsRow(e_id,data[i]);
+												}
+											}
+											rows += '</table></center>';
+											document.getElementById("clip-list~" + e_id).innerHTML = rows;							
+										}
+									});
+								})
+								.catch(function(err) {
+									console.log('Error: ' + err);
+							});
+
+							}							
+												
+
+				function listTakeaways(id){
+
+					const options = {
+						method: 'get',
+						headers: {
+							"Content-Type": "application/json",
+							"x-api-key": token,
+						}
+					};		
+
+					fetch(episode_base_url + '/episodes/'  + id + '/takeaways?limit=1000&page=0',options)
+						.then(function(response) {
+							if (!response.ok) {
+								console.log('Error with Status Code: ' + response.status);
+								return;
+							}
+							response.json().then(function(data) {	
+								if(data){
+									var all_takeaways = [];
+									for (let i = 0; i < data.length; i++) {	
+										all_takeaways.push(data[i].details);
+									}		
+								document.getElementById("takeaway-store").value = JSON.stringify(data, null, 2);
+								autocomplete(document.getElementById("add-takeaway-name"), all_takeaways);	
+								}																				 
+							});
+						})
+						.catch(function(err) {
+							console.log('Error: ' + err);
+					});
+
+					}							
+
+					function updateEpisodeTakeawayRowField(u){
+
+						var ua = u.id.split("~");
+						var e_id = ua[2];
+						var field = ua[3];
+						var id = ua[4];
+
+						var details = document.getElementById('episode~takeaway~details~' + id).value;
+
+						var postData = {};
+						postData.details = details;
+
+						delete postData.id;
+						var options = {
+								method: "PUT",
+								headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token
+								},
+								body: JSON.stringify(postData)
+							};
+
+						fetch(episode_base_url + '/takeaways/' + id,options)
+							.then(function(response) {
+								console.log("Updated!");
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});				
+
+						}
+
+					function deleteTakeaway(e_id,l_id){
+
+						var options = {
+								method: "DELETE",
+								headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token
+								}
+							};
+						console.log(episode_base_url + '/episodes/' + e_id + '/takeaways/' + l_id);
+						fetch(episode_base_url + '/episodes/' + e_id + '/takeaways/' + l_id,options)
+							.then(function(response) {
+								console.log("DELETED!");	
+								listEpisodeTakeaways(e_id)
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});	
+
+						}	
+						
+					function addTakeaway(){
+
+						var e_id = document.getElementById('add-takeaway-episode-id').value;
+						var details = document.getElementById('add-takeaway-details').value;
+
+						var postData = {};
+						postData.details = details;
+
+						var options = {
+								method: "POST",
+								headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token
+								},
+								body: JSON.stringify(postData)
+							};
+
+						fetch(episode_base_url + '/episodes/' + e_id + '/takeaways',options)
+							.then(function(response) {
+								response.json().then(function(data) {
+								
+								console.log("----");
+								console.log(data);
+								console.log("----");
+
+								var postData = {};
+								postData.name = name;
+								postData.id = data.id;
+
+								var options = {
+										method: "POST",
+										headers: {
+										"Content-Type": "application/json",
+										"x-api-key": token
+										},
+										body: JSON.stringify(postData)
+									};
+								
+								console.log(episode_base_url + '/episodes/' + e_id + '/takeaways');
+								console.log(options);
+
+								fetch(episode_base_url + '/episodes/' + e_id + '/takeaways',options)
+									.then(function(response) {
+										response.json().then(function(data) {
+										//console.log(data);
+										listEpisodeTakeaways(e_id);
+									});
+									})
+									.catch(function(err) {
+										console.log('Error: ' + err);
+								});	
+
+							});
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});	
+
+						$("#addTakeaway").modal('hide');	
+
+						}							
+						
+					function episodeTakeawaysRow(e_id,row){
+
+						var html = '';				
+						html += '<table style="border: 0px solid #000; width: 100%;">';
+						html += '<tr>';
+						html += '<td width="15%" align="right"><strong>Details:</strong></td>';	
+						html += '<td width="100%" align="right"><textarea class="form-control" onchange="updateEpisodeTakeawayRowField(this);" id="episode~' + e_id + '~takeaway~details~' + row.id + '" rows="3">' + row.details + '</textarea></td><td></td>';													
+						html += '<td width="15%" align="right"></td><td><input type="button" class="btn btn-danger" name="delete" value="DELETE" onclick="if (confirm(' + "'" + 'Are you sure you want to delete?' + "'" + ') == true) { deleteTakeaway(' + e_id + ',' + row.id + ') }" style="width: 125px;"></td><td></td>';
+						html += '</tr>';
+						html += '</table>';
+						html += '<hr>';							
+
+						return html;
+						}						
+					
+					function listEpisodeTakeaways(e_id){
+						const options = {
+							method: 'get',
+							headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token,
+							}
+						};		
+
+						fetch(episode_base_url + '/episodes/' + e_id + '/takeaways',options)
+							.then(function(response) {
+								if (!response.ok) {
+									console.log('Error with Status Code: ' + response.status);
+									return;
+								}
+								response.json().then(function(data) {
+									var rows = '';
+									if(data){
+										var rows = '<center><table style="border: 0px solid #000; width: 80%;">';
+										//console.log(data);
+										if(data.length == 0){
+												rows += '<tr><td><p align="center">No Takeaways</p></td></tr>';
+											}
+										else{										
+											for (let i = 0; i < data.length; i++) {
+												rows += episodeTakeawaysRow(e_id,data[i]);
+											}
+										}
+										rows += '</table></center>';
+										document.getElementById("takeaway-list~" + e_id).innerHTML = rows;							
+									}
+								});
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});
+
+						}
+
+					function listGuests(id){
+
+						const options = {
+							method: 'get',
+							headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token,
+							}
+						};		
+
+						fetch(episode_base_url + '/episodes/' + id + '/guests?limit=1000&page=0',options)
+							.then(function(response) {
+								if (!response.ok) {
+									console.log('Error with Status Code: ' + response.status);
+									return;
+								}
+								response.json().then(function(data) {	
+									if(data){
+										var all_guests = [];
+										for (let i = 0; i < data.length; i++) {	
+											all_guests.push(data[i].name);
+										}		
+									document.getElementById("guest-store").value = JSON.stringify(data, null, 2);
+									autocomplete(document.getElementById("add-guest-name"), all_guests);	
+									}																				 
+								});
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});
+
+						}	
+
+					function updateEpisodeGuestRowField(u){
+
+						var ua = u.id.split("~");
+						var field = ua[2];
+						var e_id = ua[3];
+						var id = ua[4];
+						//console.log(ua);
+
+						var first_name = document.getElementById('episode~guest~first_name~' + e_id + '~' + id).value;
+						var last_name = document.getElementById('episode~guest~last_name~' + e_id + '~' + id).value;
+						var guest_bio = document.getElementById('episode~guest~guest_bio~' + e_id + '~' + id).value;
+						var white = document.getElementById('episode~guest~white~' + e_id + '~' + id).value;
+						var male = document.getElementById('episode~guest~male~' + e_id + '~' + id).value;
+						var company_name = document.getElementById('episode~guest~company_name~' + e_id + '~' + id).value;
+						var company_description = document.getElementById('episode~guest~company_description~' + e_id + '~' + id).value;
+						var company_website = document.getElementById('episode~guest~company_website~' + e_id + '~' + id).value;
+						var guest_linkedin = document.getElementById('episode~guest~guest_linkedin~' + e_id + '~' + id).value;
+						var guest_twitter = document.getElementById('episode~guest~guest_twitter~' + e_id + '~' + id).value;
+						var company_logo = document.getElementById('episode~guest~company_logo~' + e_id + '~' + id).value;
+						var guest_photo_raw = document.getElementById('episode~guest~guest_photo_raw~' + e_id + '~' + id).value;
+						var guest_photo_final = document.getElementById('episode~guest~guest_photo_final~' + e_id + '~' + id).value;						
+
+						var postData = {};
+						postData.first_name = first_name;
+						postData.last_name = last_name;
+						postData.guest_bio = guest_bio;
+						postData.white = white;
+						postData.male = male;
+						postData.company_name = company_name;
+						postData.company_description = company_description;
+						postData.company_website = company_website;
+						postData.guest_linkedin = guest_linkedin;
+						postData.guest_twitter = guest_twitter;
+						postData.company_logo = company_logo;
+						postData.guest_photo_raw = guest_photo_raw;
+						postData.guest_photo_final = guest_photo_final;
+
+						delete postData.id;
+						var options = {
+								method: "PUT",
+								headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token
+								},
+								body: JSON.stringify(postData)
+							};
+
+						fetch(episode_base_url + '/episodes/' + e_id + '/guests/' + id,options)
+							.then(function(response) {
+								console.log("Updated!");
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});				
+
+						}
+
+						function deleteGuest(e_id,l_id){
+
+						var options = {
+								method: "DELETE",
+								headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token
+								}
+							};
+						console.log(episode_base_url + '/episodes/' + e_id + '/guests/' + l_id);
+						fetch(episode_base_url + '/episodes/' + e_id + '/guests/' + l_id,options)
+							.then(function(response) {
+								console.log("DELETED!");	
+								listEpisodeGuests(e_id)
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});	
+
+						}	
+
+					function addGuest(){
+
+						var e_id = document.getElementById('add-guest-episode-id').value;
+						var first_name = document.getElementById('add-guest-first_name').value;
+						var last_name = document.getElementById('add-guest-last_name').value;
+						var guest_bio = document.getElementById('add-guest-guest_bio').value;
+						var white = document.getElementById('add-guest-white').value;
+						var male = document.getElementById('add-guest-male').value;
+						var company_name = document.getElementById('add-guest-company_name').value;
+						var company_description = document.getElementById('add-guest-company_description').value;
+						var company_website = document.getElementById('add-guest-company_website').value;
+						var guest_linkedin = document.getElementById('add-guest-guest_linkedin').value;
+						var guest_twitter = document.getElementById('add-guest-guest_twitter').value;
+						var company_logo = document.getElementById('add-guest-company_logo').value;
+						var guest_photo_raw = document.getElementById('add-guest-guest_photo_raw').value;
+						var guest_photo_final = document.getElementById('add-guest-guest_photo_final').value;
+
+						var postData = {};
+						postData.first_name = first_name;
+						postData.last_name = last_name;
+						postData.guest_bio = guest_bio;
+						postData.white = white;
+						postData.male = male;
+						postData.company_name = company_name;
+						postData.company_description = company_description;
+						postData.company_website = company_website;
+						postData.guest_linkedin = guest_linkedin;
+						postData.guest_twitter = guest_twitter;
+						postData.company_logo = company_logo;
+						postData.guest_photo_raw = guest_photo_raw;
+						postData.guest_photo_final = guest_photo_final;
+
+						var options = {
+								method: "POST",
+								headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token
+								},
+								body: JSON.stringify(postData)
+							};
+						fetch(episode_base_url + '/episodes/' + e_id + '/guests',options)
+							.then(function(response) {
+								response.json().then(function(data) {
+								
+								console.log("----");
+								console.log(data);
+								console.log("----");
+
+								var postData = {};
+								postData.name = name;
+								postData.id = data.id;
+
+								var options = {
+										method: "POST",
+										headers: {
+										"Content-Type": "application/json",
+										"x-api-key": token
+										},
+										body: JSON.stringify(postData)
+									};
+								
+								console.log(episode_base_url + '/episodes/' + e_id + '/guests');
+								console.log(options);
+
+								fetch(episode_base_url + '/episodes/' + e_id + '/guests',options)
+									.then(function(response) {
+										response.json().then(function(data) {
+										//console.log(data);
+										listEpisodeGuests(e_id);
+									});
+									})
+									.catch(function(err) {
+										console.log('Error: ' + err);
+								});	
+
+							});
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});	
+
+						$("#addGuest").modal('hide');	
+
+						}							
+
+					function episodeGuestsRow(e_id,row){
+
+						var html = '';	
+
+						html += '<div class="form-group" style="display: none;">';
+						html += '<textarea style="height: 400px;" class="form-control" id="bstore~guest~' + e_id + '~' + row.id + '" rows="5">' + JSON.stringify(row, null, 2) + '</textarea>';
+						html += '</div>';						
+						html += '<table style="border: 0px solid #000; width: 100%;">';			
+						html += '<tr>';
+						html += '<td width="15%" align="right"><strong>First Name:</strong></td>';	
+						html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeGuestRowField(this);" class="form-control" id="episode~guest~first_name~' + e_id + '~' + row.id + '" placeholder="" value="' + row.first_name + '"></td>';
+						html += '</tr><tr>';
+						html += '<td width="15%" align="right"><strong>Last Name:</strong></td>';	
+						html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeGuestRowField(this);" class="form-control" id="episode~guest~last_name~' + e_id + '~' + row.id + '" placeholder="" value="' + row.last_name + '"></td>';
+						html += '</tr><tr>';
+						html += '<td width="15%" align="right"><strong>Guest Bio:</strong></td>';	
+						html += '<td><textarea style="height: 125px;" class="form-control" onchange="updateEpisodeGuestRowField(this);" id="episode~guest~guest_bio~' + e_id + '~' + row.id + '" rows="3">' + row.guest_bio + '</textarea></td>';
+						html += '</tr><tr>';
+						html += '<td width="15%" align="right"><strong>White:</strong></td>';	
+						html += '<td><input type="text" style="background-color:#FFF; width: 5%;" onchange="updateEpisodeGuestRowField(this);" class="form-control" id="episode~guest~white~' + e_id + '~' + row.id + '" placeholder="" value="' + row.white + '"></td>';
+						html += '</tr><tr>';
+						html += '<td width="15%" align="right"><strong>Male:</strong></td>';							
+						html += '<td><input type="text" style="background-color:#FFF; width: 5%;" onchange="updateEpisodeGuestRowField(this);" class="form-control" id="episode~guest~male~' + e_id + '~' + row.id + '" placeholder="" value="' + row.male + '"></td>';
+						html += '</tr><tr>';
+						html += '</tr><tr><td colspan="2"><hr></td><tr>';	
+						html += '<td width="15%" align="right"><strong>Company Name:</strong></td>';	
+						html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeGuestRowField(this);" class="form-control" id="episode~guest~company_name~' + e_id + '~' + row.id + '" placeholder="" value="' + row.company_name + '"></td>';
+						html += '</tr><tr>';
+						html += '<td width="15%" align="right"><strong>Company Description:</strong></td>';	
+						html += '<td><textarea style="height: 125px;" class="form-control" onchange="updateEpisodeGuestRowField(this);" id="episode~guest~company_description~' + e_id + '~' + row.id + '" rows="3">' + row.company_description + '</textarea></td>';
+						html += '</tr><tr>';
+						html += '<td width="15%" align="right"><strong>Company Website:</strong></td>';	
+						html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeGuestRowField(this);" class="form-control" id="episode~guest~company_website~' + e_id + '~' + row.id + '" placeholder="" value="' + row.company_website + '"></td>';
+						html += '</tr><tr>';
+						html += '</tr><tr><td colspan="2"><hr></td><tr>';							
+						html += '<td width="15%" align="right"><strong>Guest LinkedIn:</strong></td>';	
+						html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeGuestRowField(this);" class="form-control" id="episode~guest~guest_linkedin~' + e_id + '~' + row.id + '" placeholder="" value="' + row.guest_linkedin + '"></td>';
+						html += '</tr><tr>';
+						html += '<td width="15%" align="right"><strong>Guest Twitter:</strong></td>';	
+						html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeGuestRowField(this);" class="form-control" id="episode~guest~guest_twitter~' + e_id + '~' + row.id + '" placeholder="" value="' + row.guest_twitter + '"></td>';
+						html += '</tr><tr>';
+						html += '</tr><tr><td colspan="2"><hr></td><tr>';							
+						html += '<td width="15%" align="right"><strong>Company Logo:</strong></td>';	
+						html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeGuestRowField(this);" class="form-control" id="episode~guest~company_logo~' + e_id + '~' + row.id + '" placeholder="" value="' + row.company_logo + '"></td>';
+						html += '</tr><tr>';
+						html += '<td width="15%" align="right"><strong>Photo (Raw):</strong></td>';	
+						html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeGuestRowField(this);" class="form-control" id="episode~guest~guest_photo_raw~' + e_id + '~' + row.id + '" placeholder="" value="' + row.guest_photo_raw + '"></td>';
+						html += '</tr><tr>';
+						html += '<td width="15%" align="right"><strong>Photo (Final):</strong></td>';	
+						html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeGuestRowField(this);" class="form-control" id="episode~guest~guest_photo_final~' + e_id + '~' + row.id + '" placeholder="" value="' + row.guest_photo_final + '"></td>';
+						html += '</tr><tr>';
+						html += '<td width="5%"></td>';	
+						html += '<td align="left"><input type="button" class="btn btn-danger" name="delete" value="DELETE" onclick="if (confirm(' + "'" + 'Are you sure you want to delete?' + "'" + ') == true) { deleteGuest(' + e_id + ',' + row.id + ') }" style="width: 125px;"></td>';
+						html += '</tr><tr><td colspan="2"><hr></td><tr>';						
+						html += '</table>';
+						html += '<hr>';
+
+						return html;
+						}						
+
+						function listEpisodeGuests(e_id){
+						const options = {
+							method: 'get',
+							headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token,
+							}
+						};		
+
+						fetch(episode_base_url + '/episodes/' + e_id + '/guests',options)
+							.then(function(response) {
+								if (!response.ok) {
+									console.log('Error with Status Code: ' + response.status);
+									return;
+								}
+								response.json().then(function(data) {
+									var rows = '';
+									if(data){
+										var rows = '<center><table style="border: 0px solid #000; width: 80%;">';
+										//console.log(data);
+										if(data.length == 0){
+												rows += '<tr><td><p align="center">No Guests</p></td></tr>';
+											}
+										else{										
+											for (let i = 0; i < data.length; i++) {
+												rows += episodeGuestsRow(e_id,data[i]);
+											}
+										}
+										rows += '</table></center>';
+										document.getElementById("guest-list~" + e_id).innerHTML = rows;							
+									}
+								});
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});
+
+						}
+
+					function listSegments(id){
+
+						const options = {
+							method: 'get',
+							headers: {
+								"Content-Type": "application/json",
+								"x-api-key": token,
+							}
+						};		
+
+						fetch(episode_base_url + '/episodes/' + id + '/segments?limit=1000&page=0',options)
+							.then(function(response) {
+								if (!response.ok) {
+									console.log('Error with Status Code: ' + response.status);
+									return;
+								}
+								response.json().then(function(data) {	
+									if(data){
+										var all_segments = [];
+										for (let i = 0; i < data.length; i++) {	
+											all_segments.push(data[i].title);
+										}		
+									document.getElementById("segment-store").value = JSON.stringify(data, null, 2);
+									autocomplete(document.getElementById("add-segment-name"), all_segments);	
+									}																				 
+								});
+							})
+							.catch(function(err) {
+								console.log('Error: ' + err);
+						});
+
+						}	
+
+						function updateEpisodeSegmentRowField(u){
+
+							var ua = u.id.split("~");
+							var field = ua[2];
+							var e_id = ua[3];
+							var id = ua[4];
+
+							var title = document.getElementById('episode~segment~title~' + e_id + '~' + id).value;
+							var transcript = document.getElementById('episode~segment~transcript~' + e_id + '~' + id).value;
+							var video_url = document.getElementById('episode~segment~video_url~' + e_id + '~' + id).value;
+							var video_embed = document.getElementById('episode~segment~video_embed~' + e_id + '~' + id).value;
+
+							var postData = {};
+							postData.title = title;
+							postData.transcript = transcript;
+							postData.video_url = video_url;
+							postData.video_embed = video_embed;
+
+							delete postData.id;
+							var options = {
+									method: "PUT",
+									headers: {
+									"Content-Type": "application/json",
+									"x-api-key": token
+									},
+									body: JSON.stringify(postData)
+								};
+
+							fetch(episode_base_url + '/episodes/' + e_id + '/segments/' + id,options)
+								.then(function(response) {
+									console.log("Updated!");
+								})
+								.catch(function(err) {
+									console.log('Error: ' + err);
+							});				
+
+							}
+
+						function deleteSegment(e_id,l_id){
+
+							var options = {
+									method: "DELETE",
+									headers: {
+									"Content-Type": "application/json",
+									"x-api-key": token
+									}
+								};
+							console.log(episode_base_url + '/episodes/' + e_id + '/segments/' + l_id);
+							fetch(episode_base_url + '/episodes/' + e_id + '/segments/' + l_id,options)
+								.then(function(response) {
+									console.log("DELETED!");	
+									listEpisodeSegments(e_id)
+								})
+								.catch(function(err) {
+									console.log('Error: ' + err);
+							});	
+
+							}	
+
+						function addSegment(){
+
+							var e_id = document.getElementById('add-segment-episode-id').value;
+							var title = document.getElementById('add-segment-title').value;
+							var transcript = document.getElementById('add-segment-transcript').value;
+							var video_url = document.getElementById('add-segment-video_url').value;
+							var video_embed = document.getElementById('add-segment-video_embed').value;					
+
+							var postData = {};
+							postData.title = title;
+							postData.transcript = transcript;
+							postData.video_url = video_url;
+							postData.video_embed = video_embed;							
+
+							var options = {
+									method: "POST",
+									headers: {
+									"Content-Type": "application/json",
+									"x-api-key": token
+									},
+									body: JSON.stringify(postData)
+								};
+
+							fetch(episode_base_url + '/episodes/' + e_id + '/segments',options)
+								.then(function(response) {
+									response.json().then(function(data) {
+									
+									console.log("----");
+									console.log(data);
+									console.log("----");
+
+									var postData = {};
+									postData.name = name;
+									postData.id = data.id;
+
+									var options = {
+											method: "POST",
+											headers: {
+											"Content-Type": "application/json",
+											"x-api-key": token
+											},
+											body: JSON.stringify(postData)
+										};
+									
+									console.log(episode_base_url + '/episodes/' + e_id + '/segments');
+									console.log(options);
+
+									fetch(episode_base_url + '/episodes/' + e_id + '/segments',options)
+										.then(function(response) {
+											response.json().then(function(data) {
+											//console.log(data);
+											listEpisodeSegments(e_id);
+										});
+										})
+										.catch(function(err) {
+											console.log('Error: ' + err);
+									});	
+
+								});
+								})
+								.catch(function(err) {
+									console.log('Error: ' + err);
+							});	
+
+							$("#addSegment").modal('hide');	
+
+							}							
+
+						function episodeSegmentsRow(e_id,row){
+
+							var html = '';				
+							html += '<table style="border: 0px solid #000; width: 100%;">';
+							html += '<tr>';
+							html += '<td width="15%" align="right"><strong>Title:</strong></td>';	
+							html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeSegmentRowField(this);" class="form-control" id="episode~segment~title~' + e_id + '~' + row.id + '" placeholder="" value="' + row.title + '"></td>';
+							html += '</tr><tr>';							
+							html += '<td width="15%" align="right"><strong>Transcript:</strong></td>';	
+							html += '<td><textarea style="height: 200px;" class="form-control" onchange="updateEpisodeSegmentRowField(this);" id="episode~segment~transcript~' + e_id + '~' + row.id + '" rows="3">' + row.transcript + '</textarea></td>';
+							html += '</tr><tr>';							
+							html += '<td width="15%" align="right"><strong>Video URL:</strong></td>';	
+							html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeSegmentRowField(this);" class="form-control" id="episode~segment~video_url~' + e_id + '~' + row.id + '" placeholder="" value="' + row.video_url + '"></td>';
+							html += '</tr><tr>';
+							html += '<td width="15%" align="right"><strong>Video Embed:</strong></td>';		
+							html += '<td><textarea class="form-control" onchange="updateEpisodeSegmentRowField(this);" id="episode~segment~video_embed~' + e_id + '~' + row.id + '" rows="3">' + row.video_embed + '</textarea></td>';
+							html += '</tr><tr>';
+							html += '<td width="15%" align="right"></td>';		
+							html += '<td align="left"><input type="button" class="btn btn-danger" name="delete" value="DELETE" onclick="if (confirm(' + "'" + 'Are you sure you want to delete?' + "'" + ') == true) { deleteSegment(' + e_id + ',' + row.id + ') }" style="width: 125px;"></td>';
+							html += '</table>';
+							html += '<hr>';
+							return html;
+							}						
+
+						function listEpisodeSegments(e_id){
+
+							const options = {
+								method: 'get',
+								headers: {
+									"Content-Type": "application/json",
+									"x-api-key": token,
+								}
+							};		
+
+							fetch(episode_base_url + '/episodes/' + e_id + '/segments',options)
+								.then(function(response) {
+									if (!response.ok) {
+										console.log('Error with Status Code: ' + response.status);
+										return;
+									}
+									response.json().then(function(data) {
+										var rows = '';
+										if(data){
+
+											document.getElementById('bstore~episodes~segments~' + e_id).value = JSON.stringify(data);
+
+											var rows = '<center><table style="border: 0px solid #000; width: 80%;">';
+											//console.log(data);
+											if(data.length == 0){
+												rows += '<tr><td><p align="center">No Segments</p></td></tr>';
+											}
+											else{											
+												for (let i = 0; i < data.length; i++) {
+													rows += episodeSegmentsRow(e_id,data[i]);
+												}
+											}
+											rows += '</table></center>';
+											document.getElementById("segment-list~" + e_id).innerHTML = rows;							
+										}
+									});
+								})
+								.catch(function(err) {
+									console.log('Error: ' + err);
+							});
+
+							}	
+							
+							function listLinks(id){
+
+								const options = {
+									method: 'get',
+									headers: {
+										"Content-Type": "application/json",
+										"x-api-key": token,
+									}
+								};		
+
+								fetch(episode_base_url + '/episodes/' + id + '/links?limit=1000&page=0',options)
+									.then(function(response) {
+										if (!response.ok) {
+											console.log('Error with Status Code: ' + response.status);
+											return;
+										}
+										response.json().then(function(data) {	
+											if(data){
+												var all_links = [];
+												for (let i = 0; i < data.length; i++) {	
+													all_links.push(data[i].title);
+												}		
+											document.getElementById("link-store").value = JSON.stringify(data, null, 2);
+											autocomplete(document.getElementById("add-link-name"), all_links);	
+											}																				 
+										});
+									})
+									.catch(function(err) {
+										console.log('Error: ' + err);
+								});
+
+								}	
+
+								function updateEpisodeLinkRowField(u){
+
+									var ua = u.id.split("~");
+									var field = ua[2];
+									var id = ua[3];
+
+									var title = document.getElementById('episode~link~title~' + id).value;
+									var description = document.getElementById('episode~link~description~' + id).value;
+									var url = document.getElementById('episode~link~url~' + id).value;
+
+									var postData = {};
+									postData.name = name;
+									postData.description = description;
+									postData.url = url;
+
+									delete postData.id;
+									var options = {
+											method: "PUT",
+											headers: {
+											"Content-Type": "application/json",
+											"x-api-key": token
+											},
+											body: JSON.stringify(postData)
+										};
+
+									fetch(episode_base_url + '/links/' + id,options)
+										.then(function(response) {
+											console.log("Updated!");
+										})
+										.catch(function(err) {
+											console.log('Error: ' + err);
+									});				
+
+									}
+
+								function deleteLink(e_id,l_id){
+
+									var options = {
+											method: "DELETE",
+											headers: {
+											"Content-Type": "application/json",
+											"x-api-key": token
+											}
+										};
+									console.log(episode_base_url + '/episodes/' + e_id + '/links/' + l_id);
+									fetch(episode_base_url + '/episodes/' + e_id + '/links/' + l_id,options)
+										.then(function(response) {
+											console.log("DELETED!");	
+											listEpisodeLinks(e_id)
+										})
+										.catch(function(err) {
+											console.log('Error: ' + err);
+									});	
+
+									}	
+
+								function addLink(){
+
+									var e_id = document.getElementById('add-link-episode-id').value;
+									var title = document.getElementById('add-link-title').value;
+									var description = document.getElementById('add-link-description').value;
+									var url = document.getElementById('add-link-url').value;			
+
+									var postData = {};
+									postData.title = title;
+									postData.description = description;
+									postData.url = url;					
+
+									var options = {
+											method: "POST",
+											headers: {
+											"Content-Type": "application/json",
+											"x-api-key": token
+											},
+											body: JSON.stringify(postData)
+										};
+
+									fetch(episode_base_url + '/episodes/' + e_id + '/links',options)
+										.then(function(response) {
+											response.json().then(function(data) {
+											
+											console.log("----");
+											console.log(data);
+											console.log("----");
+
+											var postData = {};
+											postData.name = name;
+											postData.id = data.id;
+
+											var options = {
+													method: "POST",
+													headers: {
+													"Content-Type": "application/json",
+													"x-api-key": token
+													},
+													body: JSON.stringify(postData)
+												};
+											
+											console.log(episode_base_url + '/episodes/' + e_id + '/links');
+											console.log(options);
+
+											fetch(episode_base_url + '/episodes/' + e_id + '/links',options)
+												.then(function(response) {
+													response.json().then(function(data) {
+													//console.log(data);
+													listEpisodeLinks(e_id);
+												});
+												})
+												.catch(function(err) {
+													console.log('Error: ' + err);
+											});	
+
+										});
+										})
+										.catch(function(err) {
+											console.log('Error: ' + err);
+									});	
+
+									$("#addLink").modal('hide');	
+
+									}							
+
+								function episodeLinksRow(e_id,row){
+
+									var html = '';				
+									html += '<table style="border: 0px solid #000; width: 100%;">';
+									html += '<tr>';
+									html += '<td width="15%" align="right"><strong>Title:</strong></td>';	
+									html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeLinkRowField(this);" class="form-control" id="episode~link~title~' + row.id + '" placeholder="" value="' + row.title + '"></td>';
+									html += '</tr><tr>';							
+									html += '<td width="15%" align="right"><strong>Description:</strong></td>';	
+									html += '<td><textarea style="height: 200px;" class="form-control" onchange="updateEpisodeLinkRowField(this);" id="episode~clip~description~' + row.id + '" rows="3">' + row.description + '</textarea></td>';
+									html += '</tr><tr>';							
+									html += '<td width="15%" align="right"><strong>URL:</strong></td>';	
+									html += '<td><input type="text" style="background-color:#FFF;" onchange="updateEpisodeLinkRowField(this);" class="form-control" id="episode~link~url~' + row.id + '" placeholder="" value="' + row.url + '"></td>';
+									html += '</tr><tr>';
+									html += '<td width="15%" align="right"></td>';		
+									html += '<td align="left"><input type="button" class="btn btn-danger" name="delete" value="DELETE" onclick="if (confirm(' + "'" + 'Are you sure you want to delete?' + "'" + ') == true) { deleteLink(' + e_id + ',' + row.id + ') }" style="width: 125px;"></td>';
+									html += '</table>';
+									html += '<hr>';
+									return html;
+									}						
+
+								function listEpisodeLinks(e_id){
+									const options = {
+										method: 'get',
+										headers: {
+											"Content-Type": "application/json",
+											"x-api-key": token,
+										}
+									};		
+
+									fetch(episode_base_url + '/episodes/' + e_id + '/links',options)
+										.then(function(response) {
+											if (!response.ok) {
+												console.log('Error with Status Code: ' + response.status);
+												return;
+											}
+											response.json().then(function(data) {
+												var rows = '';
+												if(data){
+													var rows = '<center><table style="border: 0px solid #000; width: 80%;">';
+													//console.log(data);
+													if(data.length == 0){
+														rows += '<tr><td><p align="center">No Links</p></td></tr>';
+													}
+													else{											
+														for (let i = 0; i < data.length; i++) {
+															rows += episodeLinksRow(e_id,data[i]);
+														}
+													}
+													rows += '</table></center>';
+													document.getElementById("link-list~" + e_id).innerHTML = rows;							
+												}
+											});
+										})
+										.catch(function(err) {
+											console.log('Error: ' + err);
+									});
+
+									}							
+
+			function deleteEpisodeTag(id,tag_id){
+
+				var options = {
+						method: "DELETE",
+						headers: {
+						"Content-Type": "application/json",
+						"x-api-key": token
+						}
+					};
+				fetch(episode_base_url + '/episodes/' + id + "/tags/" + tag_id,options)
+					.then(function(response) {						
+						getEpisodeTags(id);
+						console.log("DELETED!");
+					})
+					.catch(function(err) {
+						console.log('Error: ' + err);
+				});	
+
+				}
+
+			function addEpisodeTag(id){
+
+				var name = document.getElementById('add-tag~' + id).value;
+
+				var postData = {};
+				postData.name = name;
+
+				var options = {
+						method: "POST",
+						headers: {
+						"Content-Type": "application/json",
+						"x-api-key": token
+						},
+						body: JSON.stringify(postData)
+					};
+
+				fetch(episode_base_url + '/episodes/' + id + '/tags',options)
+					.then(function(response) {
+
+						response.json().then(function(data) {
+							var tag_id = data.id;
+							var postData = {};
+							postData.episode_id = id;
+							postData.tag_id = tag_id;
+							var options = {
+									method: "POST",
+									headers: {
+									"Content-Type": "application/json",
+									"x-api-key": token
+									},
+									body: JSON.stringify(postData)
+								};
+
+							fetch(episode_base_url + '/episodes/' + id + '/tags',options)
+								.then(function(response) {
+									getEpisodeTags(id);							
+								})
+								.catch(function(err) {
+									console.log('Error: ' + err);
+							});		
+						
+						});	
+
+					})
+					.catch(function(err) {
+						console.log('Error: ' + err);
+				});					
+
+				$("#addEpisode").modal('hide');	
+
+			}
+
+			function getEpisodeTags(e_id){
+
+				const options = {
+					method: 'get',
+					headers: {
+						"Content-Type": "application/json",
+						"x-api-key": token,
+					}
+				};		
+		
+				fetch(episode_base_url + '/episodes/' + e_id + '/tags',options)
+					.then(function(response) {
+						if (!response.ok) {
+							console.log('Error with Status Code: ' + response.status);
+							return;
+						}
+						response.json().then(function(data) {
+							console.log(data);
+							var rows = '<div class="row-auto">';
+							for (let i = 0; i < data.length; i++) {
+								rows += '<div class="col-auto">' + data[i].name + '  <a href="#" onclick="deleteEpisodeTag(' + e_id + ',' + data[i].tag_id + '); return false;" style="text-decoration: none;">&#10060;</a></div>';
+							}
+							document.getElementById("tag-list~" + e_id).innerHTML = rows;
+						});
+					})
+					.catch(function(err) {
+						console.log('Error: ' + err);
+				});				
+			}
+
+			$('#episodeAccordian').on('show.bs.collapse', function (e) {
+
+				var row_id = e.target.id;
+				var e_id = row_id.replace("collapse-","");						
+		
+				getEpisodeTags(e_id);
+				listEpisodeTakeaways(e_id);
+				listEpisodeQuotes(e_id);
+				listEpisodeSegments(e_id);
+				listEpisodeLinks(e_id);
+				listEpisodeGuests(e_id);
+				listEpisodeClips(e_id);
+
+			})
+
+			$('#episodeAccordian').on('hidden.bs.collapse', function (e) {
+				var row_id = e.target.id;
+				var e_id = row_id.replace("collapse-","");
+			 	//alert("episode: " + e_id);
+			})	
+
+			function deleteEpisode(id){
+
+				var options = {
+						method: "DELETE",
+						headers: {
+						"Content-Type": "application/json",
+						"x-api-key": token
+						}
+					};
+
+				fetch(episode_base_url + '/episodes/' + id,options)
+					.then(function(response) {
+						console.log("DELETED!");
+						listEpisodes();
+					})
+					.catch(function(err) {
+						console.log('Error: ' + err);
+				});	
+
+			}
+
+			function addEpisode(){
+
+				var event_type = document.getElementById('add-event_type').value;
+				var season = document.getElementById('add-season').value;
+				var episode_number = document.getElementById('add-episode_number').value;
+				var episode_title = document.getElementById('add-episode_title').value;
+				var episode_summary = document.getElementById('add-episode_summary').value;
+				var page_title = document.getElementById('add-page_title').value;
+				var page_description = document.getElementById('add-page_description').value;
+				var page_url = document.getElementById('add-page_url').value;
+				var brainstorm_date = document.getElementById('add-brainstorm_date').value;
+				var recording_date = document.getElementById('add-recording_date').value;
+				var publish_date = document.getElementById('add-publish_date').value;
+				var company_name = document.getElementById('add-company_name').value;
+				var company_description = document.getElementById('add-company_description').value;
+				var company_website = document.getElementById('add-company_website').value;				
+				var youtube_url = document.getElementById('add-youtube_url').value;
+				var youtube_embed = document.getElementById('add-youtube_embed').value;
+				var transcript = document.getElementById('add-transcript').value;
+				var workspace_name = document.getElementById('add-workspace_name').value;
+				var workspace_overview = document.getElementById('add-workspace_overview').value;
+				var workspace_url = document.getElementById('add-workspace_url').value;
+
+				var postData = {};
+				postData.event_type = event_type;
+				postData.season = season;
+				postData.episode_number = episode_number;
+				postData.episode_title = episode_title;
+				postData.episode_summary = episode_summary;
+				postData.page_title = page_title;
+				postData.page_description = page_description;
+				postData.page_url = page_url;
+				postData.brainstorm_date = brainstorm_date;
+				postData.recording_date = recording_date;
+				postData.publish_date = publish_date;
+				postData.company_name = company_name;
+				postData.company_description = company_description;
+				postData.company_website = company_website;				
+				postData.youtube_url = youtube_url;
+				postData.youtube_embed = youtube_embed;
+				postData.transcript = transcript;
+				postData.workspace_name = workspace_name;
+				postData.workspace_overview = workspace_overview;
+				postData.workspace_url = workspace_url;
+
+				var options = {
+						method: "POST",
+						headers: {
+						"Content-Type": "application/json",
+						"x-api-key": token
+						},
+						body: JSON.stringify(postData)
+					};
+
+				fetch(episode_base_url + '/episodes/',options)
+					.then(function(response) {
+						console.log("Added!");
+						listEpisodes();
+					})
+					.catch(function(err) {
+						console.log('Error: ' + err);
+				});	
+
+				$("#addEpisode").modal('hide');	
+			}			
+			
+			function openAddEpisodeModal(){
+				$("#addEpisode").modal('show');				
+			}
+
+			function closeAddEpisodeModal(){
+				$("#addEpisode").modal('hide');				
+			}				
+			
+			function openAddTakeawayModal(e_id){
+
+			document.getElementById('add-takeaway-episode-id').value = e_id;
+			$("#addTakeaway").modal('show');				
+			}
+
+			function closeAddTakeawayModal(){
+			$("#addTakeaway").modal('hide');			
+			}	
+			
+			function openAddQuoteModal(e_id){
+
+			document.getElementById('add-quote-episode-id').value = e_id;
+			$("#addQuote").modal('show');				
+			}
+
+			function closeAddQuoteModal(){
+			$("#addQuote").modal('hide');			
+			}	
+			
+			function openAddClipModal(e_id){
+
+			document.getElementById('add-clip-episode-id').value = e_id;
+			$("#addClip").modal('show');				
+			}
+
+			function closeAddClipModal(){
+			$("#addClip").modal('hide');			
+			}				
+						
+			function openAddSegmentModal(e_id){
+
+			document.getElementById('add-segment-episode-id').value = e_id;
+			$("#addSegment").modal('show');				
+			}
+
+			function closeAddSegmentModal(){
+			$("#addSegment").modal('hide');			
+			}	
+
+			function openAddLinkModal(e_id){
+
+			document.getElementById('add-link-episode-id').value = e_id;
+			$("#addLink").modal('show');				
+			}
+
+			function closeAddLinkModal(){
+			$("#addLink").modal('hide');			
+			}				
+						
+			function openAddGuestModal(e_id,a_id){
+
+			document.getElementById('add-guest-episode-id').value = e_id;
+			$("#addGuest").modal('show');				
+			}
+
+			function closeAddGuestModal(){
+			$("#addGuest").modal('hide');			
+			}	
+			
+			function openViewEpisodeModal(e_id,a_id){
+			$("#viewEpisode").modal('show');				
+			}
+
+			function closeViewEpisodeModal(){
+			$("#viewEpisode").modal('hide');			
+			}	
+			
+			function openviewSegmentOutline(e_id){
+			$("#viewSegmentOutline").modal('show');		
+			var segments = JSON.parse(document.getElementById('bstore~episodes~segments~' + e_id).value);
+			var html = '<ul>';
+			for (let i = 0; i < segments.length; i++) {
+				html += '<li>' + segments[i].title + '</li>';
+			}
+			html += '</ul>';
+			
+			document.getElementById('viewSegmentOutlineBody').innerHTML = html;
+			}
+
+			function closeviewSegmentOutline(){
+			$("#viewSegmentOutline").modal('hide');			
+			}				
+			
+			function viewEpisode(id){
+
+				var viewHTML = document.getElementById('bview~' + id).value;
+				document.getElementById('viewEpisodeBody').innerHTML = viewHTML;
+				openViewEpisodeModal();
+			}			
+			
+			function updateEpisode(id){
+
+				const postData = JSON.parse(document.getElementById('bstore~' + id).value);
+
+				delete postData.id;
+				var options = {
+						method: "PUT",
+						headers: {
+						"Content-Type": "application/json",
+						"x-api-key": token
+						},
+						body: JSON.stringify(postData)
+					};
+
+				fetch(episode_base_url + '/episodes/' + id,options)
+					.then(function(response) {
+						console.log("Updated!");
+					})
+					.catch(function(err) {
+						console.log('Error: ' + err);
+				});				
+
+			}
+
+			function updateEpisodeRowField(u){
+
+				var ua = u.id.split("~");
+				var field = ua[0];
+				var id = ua[1];
+				console.log(id);
+
+				var bstore = JSON.parse(document.getElementById('bstore~' + id).value);
+				
+				bstore[field] = u.value;
+
+				document.getElementById('toggle-row-' + id).innerHTML = bstore.episode_title + ' (' + bstore.id + ')';
+
+				document.getElementById('bstore~' + id).value = JSON.stringify(bstore, null, 2);
+
+				updateEpisode(id);
+
+			}
+
+			function episodeHTMLRow(row,i){
+				var html = '';					
+				html += '<h2 id="html-heading-' + row.id + '">' + row.name + '</h2>';				
+				html += '<p>' + row.description + '</p>';
+				return html;
+			}
+
+			function episodeRow(row,i){
+				
+				var html = '';
+
+				html += '<div style="display: none;">';
+				html += '<textarea class="form-control" id="bview~' + row.id + '" rows="5">bview~' + row.id + '</textarea>';
+				html += '</div>';
+
+				html += '<div class="accordion-item" id="episode-' + row.id + '">';					
+				html += '<h2 class="accordion-header" id="heading-' + row.id + '">';	
+				html += '<button id="toggle-row-' + row.id + '" class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-' + row.id + '" aria-expanded="false" aria-controls="collapse-' + row.id + '" style="color: #000;">';	
+				html += row.episode_title + ' - ' + row.id;
+				html += '</button>';	
+				html += '</h2>';	
+				html += '<div id="collapse-' + row.id + '" class="accordion-collapse collapse" aria-labelledby="heading-' + row.id + '" data-bs-parent="#accordion-' + row.id + '">';	
+				html += '<div class="accordion-body">';	
+
+				html += '<div class="form-group" style="display:none;">';
+				html += '<textarea style="height: 400px;" class="form-control" id="bstore~' + row.id + '" rows="5">' + JSON.stringify(row, null, 2) + '</textarea>';
+				html += '</div>';
+
+				html += '<table style="border: 0px solid #000; width: 100%;">';
+				html += '<tr>';
+				html += '<td width=20%" align="right"><strong>Event Type:</td>';
+				html += '<td><input type="text" style="width: 30%; background-color:#FFF;" onchange="updateEpisodeRowField(this);" class="form-control" id="event_type~' + row.id + '" placeholder="" value="' + row.event_type + '"></td>';
+				html += '</tr>';	
+				
+				html += '<tr>';
+				html += '<td width=20%" align="right"><strong>Season:</td>';
+				html += '<td><input type="text" style="width: 10%;background-color:#FFF;" onchange="updateEpisodeRowField(this);" class="form-control" id="season~' + row.id + '" placeholder="" value="' + row.season + '"></td>';
+				html += '</tr>';	
+				
+				html += '<tr>';
+				html += '<td width=20%" align="right"><strong>Episode Number:</td>';
+				html += '<td><input type="text" style="width: 10%;background-color:#FFF;" onchange="updateEpisodeRowField(this);" class="form-control" id="episode_number~' + row.id + '" placeholder="" value="' + row.episode_number + '"></td>';
+				html += '</tr>';	
+				
+				html += '<tr>';
+				html += '<td width=20%" align="right"><strong>Episode Title:</td>';
+				html += '<td><input type="text" style="width: 100%;background-color:#FFF;" onchange="updateEpisodeRowField(this);" class="form-control" id="episode_title~' + row.id + '" placeholder="" value="' + row.episode_title + '"></td>';
+				html += '</tr>';	
+				
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Episode Summary:</strong></label></td>';
+				html += '<td><textarea style="height: 125px;" class="form-control" onchange="updateEpisodeRowField(this);" id="episode_summary~' + row.id + '" rows="3">' + row.episode_summary + '</textarea></td>';
+				html += '</tr>';										
+
+				html += '</tr><tr><td colspan="2"><hr></td><tr>';					
+
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Page Title:</strong></label></td>';
+				html += '<td><input type="text" style="width: 100%;background-color:#FFF;" class="form-control" onchange="updateEpisodeRowField(this);" id="page_title~' + row.id + '" placeholder="" value="' + row.page_title + '"></td>';
+				html += '</tr>';
+
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Page Description:</strong></label></td>';
+				html += '<td><textarea style="height: 125px;" class="form-control" onchange="updateEpisodeRowField(this);" id="page_description~' + row.id + '" rows="3">' + row.page_description + '</textarea></td>';
+				html += '</tr>';				
+
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Page URL:</strong></label></td>';
+				html += '<td><input type="text" style="width: 100%;background-color:#FFF;" class="form-control" onchange="updateEpisodeRowField(this);" id="page_url~' + row.id + '" placeholder="" value="' + row.page_url + '"></td>';
+				html += '</tr>';				
+				
+				html += '</tr><tr><td colspan="2"><hr></td><tr>';	
+
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Brainstorm Date:</strong></label></td>';
+				html += '<td><input type="text" style="width: 20%;background-color:#FFF;" class="form-control" onchange="updateEpisodeRowField(this);" id="brainstorm_date-id~' + row.id + '" placeholder="" value="' + row.brainstorm_date + '"></td>';
+				html += '</tr>';	
+
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Recording Date:</strong></label></td>';
+				html += '<td><input type="text" style="width: 20%;background-color:#FFF;" class="form-control" onchange="updateEpisodeRowField(this);" id="recording_date-id~' + row.id + '" placeholder="" value="' + row.recording_date + '"></td>';
+				html += '</tr>';				
+				
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Publish Date:</strong></label></td>';
+				html += '<td><input type="text" style="width: 20%;background-color:#FFF;" class="form-control" onchange="updateEpisodeRowField(this);" id="publish_date~' + row.id + '" placeholder="" value="' + row.publish_date + '"></td>';
+				html += '</tr>';	
+
+				html += '</tr><tr><td colspan="2"><hr></td><tr>';	
+					
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Company Name:</strong></label></td>';
+				html += '<td><input type="text" style="width: 100%;background-color:#FFF;" class="form-control" onchange="updateEpisodeRowField(this);" id="company_name~' + row.id + '" placeholder="" value="' + row.company_name + '"></td>';
+				html += '</tr>';
+
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Company Description:</strong></label></td>';
+				html += '<td><textarea style="height: 125px;" class="form-control" onchange="updateEpisodeRowField(this);" id="company_description~' + row.id + '" rows="3">' + row.company_description + '</textarea></td>';
+				html += '</tr>';				
+					
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Company Website:</strong></label></td>';
+				html += '<td><input type="text" style="width: 100%;background-color:#FFF;" class="form-control" onchange="updateEpisodeRowField(this);" id="company_website~' + row.id + '" placeholder="" value="' + row.company_website + '"></td>';
+				html += '</tr>';				
+				
+				html += '</tr><tr><td colspan="2"><hr></td><tr>';
+
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Youtube URL:</strong></label></td>';
+				html += '<td><input type="text" style="width: 100%;background-color:#FFF;" class="form-control" onchange="updateEpisodeRowField(this);" id="youtube_url~' + row.id + '" placeholder="" value="' + row.youtube_url + '"></td>';
+				html += '</tr>';	
+				
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Youtube Embed:</strong></label></td>';
+				html += '<td><textarea class="form-control" onchange="updateEpisodeRowField(this);" id="youtube_embed~' + row.id + '" rows="3">' + row.youtube_embed + '</textarea></td>';
+				html += '</tr>';	
+
+				html += '</tr><tr><td colspan="2"><hr></td><tr>';
+
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Transcript:</strong></label></td>';
+				html += '<td><textarea style="height: 200px;" class="form-control" onchange="updateEpisodeRowField(this);" id="transcript~' + row.id + '" rows="3">' + row.transcript + '</textarea></td>';
+				html += '</tr>';	
+				
+				html += '</tr><tr><td colspan="2"><hr></td><tr>';	
+				
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Workspace Name:</strong></label></td>';
+				html += '<td><input type="text" style="width: 100%;background-color:#FFF;" class="form-control" onchange="updateEpisodeRowField(this);" id="workspace_name~' + row.id + '" placeholder="" value="' + row.workspace_name + '"></td>';
+				html += '</tr>';
+				
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Workspace Overview:</strong></label></td>';
+				html += '<td><textarea style="height: 125px;" class="form-control" onchange="updateEpisodeRowField(this);" id="workspace_overview~' + row.id + '" rows="3">' + row.workspace_overview + '</textarea></td>';
+				html += '</tr>';				
+				
+				html += '<tr>';
+				html += '<td width=10%" align="right"><strong>Workspace URL:</strong></label></td>';
+				html += '<td><input type="text" style="width: 100%;background-color:#FFF;" class="form-control" onchange="updateEpisodeRowField(this);" id="workspace_url~' + row.id + '" placeholder="" value="' + row.workspace_url + '"></td>';
+				html += '</tr>';					
+				
+				html += '</table>';
+
+				html += '<hr>';
+
+				html += '<table width="100%">';
+				html += '<tr>';
+				html += '<td width="10%"><h3>Tags:</h3></td>';				
+				html += '<td>';
+				html += '<input type="text" style="width: 250px;" class="form-control" id="add-tag~' + row.id + '" placeholder="">';
+				html += '<button type="button" onclick="addEpisodeTag(' + row.id + ');" class="btn btn-primary mb-3">Add Tag</button>';
+				html += '</td>';
+				html += '<td>';			
+				html += '<div class="container" id="tag-list~' + row.id + '">';
+				html += 'List Tags Here';
+				html += '</div>';						
+				html += '</td>';
+				html += '</tr>';				
+				html += '</table>';	
+
+				html += '<hr>';
+
+				html += '<form class="row g-3">';
+				html += '<div class="col-auto">';
+				html += '<h3>Takeaways <a href="#" onclick="openAddTakeawayModal(' + row.id + '); return false;"><i class="fa-solid fa-plus"></i></a> <a href="#" onclick="listTakeaways(' + row.id + '); return false;"><i class="fa-solid fa-arrow-rotate-right"></i></a></h3>';
+				html += '</div>';					
+				html += '</form>';	
+				html += '<hr>';
+				html += '<div class="container">';
+				html += '<div class="row">';			
+				html += '<div class="container" id="takeaway-list~' + row.id + '">';
+				html += 'List Takeaways Here';
+				html += '</div>';						
+				html += '</div>';
+				html += '</div>';
+
+				html += '<hr>';
+
+				html += '<form class="row g-3">';
+				html += '<div class="col-auto">';
+				html += '<h3>Quotes <a href="#" onclick="openAddQuoteModal(' + row.id + '); return false;"><i class="fa-solid fa-plus"></i></a> <a href="#" onclick="listQuotes(' + row.id + '); return false;"><i class="fa-solid fa-arrow-rotate-right"></i></a></h3>';
+				html += '</div>';					
+				html += '</form>';
+				html += '<hr>';	
+				html += '<div class="container">';
+				html += '<div class="row">';			
+				html += '<div class="container" id="quote-list~' + row.id + '">';
+				html += 'List Quotes Here';
+				html += '</div>';						
+				html += '</div>';
+				html += '</div>';	
+				
+				html += '<hr>';
+
+				html += '<form class="row g-3">';
+				html += '<div class="col-auto">';
+				html += '<h3>Segments <a href="#" onclick="openAddSegmentModal(' + row.id + '); return false;"><i class="fa-solid fa-plus"></i></a> <a href="#" onclick="listSegments(' + row.id + '); return false;"><i class="fa-solid fa-arrow-rotate-right"></i></a> (<a href="#" onclick="openviewSegmentOutline(' + row.id + '); return false;">Outline</a>)</h3>';
+				html += '</div>';					
+				html += '</form>';
+
+				html += '<div class="form-group" style="display: none;">';
+				html += '<textarea style="height: 400px;" class="form-control" id="bstore~episodes~segments~' + row.id + '" rows="5"></textarea>';
+				html += '</div>';
+
+				html += '<hr>';	
+				html += '<div class="container">';
+				html += '<div class="row">';			
+				html += '<div class="container" id="segment-list~' + row.id + '">';
+				html += 'List Segments Here';
+				html += '</div>';						
+				html += '</div>';
+				html += '</div>';				
+				
+				html += '<hr>';
+
+				html += '<form class="row g-3">';
+				html += '<div class="col-auto">';
+				html += '<h3>Clips <a href="#" onclick="openAddClipModal(' + row.id + '); return false;"><i class="fa-solid fa-plus"></i></a> <a href="#" onclick="listClips(' + row.id + '); return false;"><i class="fa-solid fa-arrow-rotate-right"></i></a></h3>';
+				html += '</div>';					
+				html += '</form>';	
+				html += '<hr>';
+				html += '<div class="container">';
+				html += '<div class="row">';			
+				html += '<div class="container" id="clip-list~' + row.id + '">';
+				html += 'List Clips Here';
+				html += '</div>';						
+				html += '</div>';
+				html += '</div>';	
+				
+				html += '<hr>';				
+
+				html += '<form class="row g-3">';
+				html += '<div class="col-auto">';
+				html += '<h3>Guests <a href="#" onclick="openAddGuestModal(' + row.id + '); return false;"><i class="fa-solid fa-plus"></i></a> <a href="#" onclick="listGuests(' + row.id + '); return false;"><i class="fa-solid fa-arrow-rotate-right"></i></a></h3>';
+				html += '</div>';					
+				html += '</form>';	
+				html += '<hr>';
+				html += '<div class="container">';
+				html += '<div class="row">';			
+				html += '<div class="container" id="guest-list~' + row.id + '">';
+				html += 'List Guests Here';
+				html += '</div>';						
+				html += '</div>';
+				html += '</div>';
+
+				html += '<hr>';			
+
+				html += '<form class="row g-3">';
+				html += '<div class="col-auto">';
+				html += '<h3>Links <a href="#" onclick="openAddLinkModal(' + row.id + '); return false;"><i class="fa-solid fa-plus"></i></a> <a href="#" onclick="listLinks(' + row.id + '); return false;"><i class="fa-solid fa-arrow-rotate-right"></i></a></h3>';
+				html += '</div>';					
+				html += '</form>';
+				html += '<hr>';	
+				html += '<div class="container">';
+				html += '<div class="row">';			
+				html += '<div class="container" id="link-list~' + row.id + '">';
+				html += 'List Links Here';
+				html += '</div>';						
+				html += '</div>';
+				html += '</div>';				
+
+				html += '<hr><center><input type="button" class="btn btn-danger" name="delete" value="DELETE EPISODE" onclick="if (confirm(' + "'" + 'Are you sure you want to delete?' + "'" + ') == true) { deleteEpisode(' + row.id + ') }" style=""></center>';				
+				html += '</div>';	
+				html += '</div>';	
+				html += '</div>';								
+
+				return html;
+			}
+		
+			function listEpisodes(){
+
+				var page = document.getElementById("page").value;
+				var limit = document.getElementById("limit").value;
+				var search = document.getElementById("search").value;
+				var tags = document.getElementById("tags").value;
+		
+				const options = {
+					method: 'get',
+					headers: {
+						"Content-Type": "application/json",
+						"x-api-key": token,
+					}
+				};		
+		
+				fetch(episode_base_url + '/episodes/?page=' + page + '&limit=' + limit + '&search=' + search + '&tags=' + tags,options)
+					.then(function(response) {
+						if (!response.ok) {
+							console.log('Error with Status Code: ' + response.status);
+							return;
+						}
+						response.json().then(function(data) {
+							var rows = '';
+							if(data){
+								for (let i = 0; i < data.length; i++) {
+									rows += episodeRow(data[i],i);
+								}							
+							}
+							document.getElementById("episodeAccordian").innerHTML = rows;
+							if(data){
+								for (let i = 0; i < data.length; i++) {
+									console.log("bview~" + data[i].id);
+									document.getElementById("bview~" + data[i].id).value = episodeHTMLRow(data[i],i);
+								}								
+							}							
+						});
+					})
+					.catch(function(err) {
+						console.log('Error: ' + err);
+				});
+				
+			}
+
+			if (window.addEventListener){
+				//window.addEventListener("load", listQuotes, false);
+			}
+			else if (window.attachEvent){
+				//window.attachEvent("onload", listQuotes);
+			}
+			else{
+				//window.onload = listQuotes;	
+			}
+	
+		</script>		
+
+	</div>
+</div>
+
+<div class="modal fade bd-example-modal-lg" id="addEpisode" tabindex="-1" clip="dialog" aria-labelledby="addEpisodeLabel" aria-hidden="true" style="width: 100%">
+	<div class="modal-dialog modal-xl" clip="document">
+	  <div class="modal-content">
+		<div class="modal-header">
+		  <h5 class="modal-title" id="addEpisodeLabel">New Episode</h5>
+		  <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeAddModal();">
+			<span aria-hidden="true">&times;</span>
+		  </button>
+		</div>
+		<div class="modal-body">
+		  <form>
+			  <div class="form-group">
+			  <label for="recipient-name" class="col-form-label">Event Type:</label>
+			  <input type="text" class="form-control" id="add-event_type" style="width: 20%;">
+			  </div>					
+			<div class="form-group">
+			  <label for="recipient-name" class="col-form-label">Season:</label>
+			  <input type="text" class="form-control" id="add-season" style="width: 10%;">
+			</div>				  
+			<div class="form-group">
+			  <label for="recipient-name" class="col-form-label">Episode Number:</label>
+			  <input type="text" class="form-control" id="add-episode_number" style="width: 10%;">
+			</div>				  					
+			<div class="form-group">
+			  <label for="recipient-name" class="col-form-label">Episode Title:</label>
+			  <input type="text" class="form-control" id="add-episode_title" style="width: 100%;">
+			</div>					
+			<div class="form-group">
+				<label for="message-text" class="col-form-label">Episode Summary:</label>
+				<textarea class="form-control" id="add-episode_summary"></textarea>
+			</div>		  			
+			<div class="form-group">
+			  <label for="recipient-name" class="col-form-label">Page Title:</label>
+			  <input type="text" class="form-control" id="add-page_title" style="width: 100%;">
+			</div>
+			<div class="form-group">
+				<label for="message-text" class="col-form-label">Page Description:</label>
+				<textarea class="form-control" id="add-page_description"></textarea>
+			</div>				
+			<div class="form-group">
+			  <label for="recipient-name" class="col-form-label">Page URL:</label>
+			  <input type="text" class="form-control" id="add-page_url" style="width: 100%;">
+			</div>
+			<div class="form-group">
+				<label for="recipient-name" class="col-form-label">Brainstorm Date:</label>
+				<input type="text" class="form-control" id="add-brainstorm_date" style="width: 20%;">
+			</div>	
+			<div class="form-group">
+				<label for="recipient-name" class="col-form-label">Recording Date:</label>
+				<input type="text" class="form-control" id="add-recording_date" style="width: 20%;">
+			</div>		
+			<div class="form-group">
+				<label for="recipient-name" class="col-form-label">Publish Date:</label>
+				<input type="text" class="form-control" id="add-publish_date" style="width: 20%;">
+			</div>	
+			<div class="form-group">
+				<label for="recipient-name" class="col-form-label">Company Name:</label>
+				<input type="text" class="form-control" id="add-company_name" style="width: 100%;">
+			  </div>
+			  <div class="form-group">
+				  <label for="message-text" class="col-form-label">Company Description:</label>
+				  <textarea class="form-control" id="add-company_description"></textarea>
+			  </div>				
+			  <div class="form-group">
+				<label for="recipient-name" class="col-form-label">Company Website:</label>
+				<input type="text" class="form-control" id="add-company_website" style="width: 100%;">
+			  </div>			
+			<div class="form-group">
+				<label for="recipient-name" class="col-form-label">Youtube URL:</label>
+				<input type="text" class="form-control" id="add-youtube_url" style="width: 100%;">
+			</div>	
+			<div class="form-group">
+				<label for="message-text" class="col-form-label">Youtube Enbed:</label>
+				<textarea class="form-control" id="add-youtube_embed"></textarea>
+			</div>	
+			<div class="form-group">
+				<label for="message-text" class="col-form-label">Transcript:</label>
+				<textarea class="form-control" id="add-transcript"></textarea>
+			</div>	
+			<div class="form-group">
+				<label for="recipient-name" class="col-form-label">Workspace Name:</label>
+				<input type="text" class="form-control" id="add-workspace_name" style="width: 100%;">
+			</div>	
+			<div class="form-group">
+				<label for="message-text" class="col-form-label">Workspace Overview:</label>
+				<textarea class="form-control" id="add-workspace_overview"></textarea>
+			</div>	
+			<div class="form-group">
+				<label for="recipient-name" class="col-form-label">Workspace URL:</label>
+				<input type="text" class="form-control" id="add-workspace_url" style="width: 100%;">
+			</div>																												
+		  </form>
+		</div>
+		<div class="modal-footer">
+		  <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeAddModal();">Close</button>
+		  <button type="button" class="btn btn-primary" onclick="addEpisode();">Add</button>
+		</div>
+	  </div>
+	</div>
+  </div>
+
+<style>
+	.autocomplete {
+	/*the container must be positioned relative:*/
+	position: relative;
+	display: inline-block;
+	width: 100%;
+	}
+	input {
+	border: 1px solid transparent;
+	background-color: #f1f1f1;
+	padding: 10px;
+	font-size: 16px;
+	}
+	input[type=text] {
+	background-color: #f1f1f1;
+	width: 100%;
+	}
+	textarea {
+	background-color: #f1f1f1;
+	width: 100%;
+	}	
+	input[type=submit] {
+	background-color: DodgerBlue;
+	color: #fff;
+	}
+	.autocomplete-items {
+	position: absolute;
+	border: 1px solid #d4d4d4;
+	border-bottom: none;
+	border-top: none;
+	z-index: 99;
+	/*position the autocomplete items to be the same width as the container:*/
+	top: 100%;
+	left: 0;
+	right: 0;
+	}
+	.autocomplete-items div {
+	padding: 10px;
+	cursor: pointer;
+	background-color: #fff;
+	border-bottom: 1px solid #d4d4d4;
+	}
+	.autocomplete-items div:hover {
+	/*when hovering an item:*/
+	background-color: #e9e9e9;
+	}
+	.autocomplete-active {
+	/*when navigating through the items using the arrow keys:*/
+	background-color: DodgerBlue !important;
+	color: #ffffff;
+	}	
+</style>
+
+
+  <textarea class="form-control" id="takeaway-store" rows="5" style="display: none;"></textarea>
+<div class="modal fade bd-example-modal-lg" id="addTakeaway" tabindex="-1" clip="dialog" aria-labelledby="addTakeawayLabel" aria-hidden="true" style="width: 100%">
+  <div class="modal-dialog modal-xl" clip="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addTakeawayLabel">New Takeaway</h5>
+        <input type="hidden" id="add-takeaway-episode-id" value="">
+        <input type="hidden" id="add-takeaway-area-id" value="">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeAddTakeawayModal();">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">			
+          <script>
+              function addExistingTakeaway()
+                  {
+
+                  console.log("Changing!");
+                  
+                  var takeaways = JSON.parse(document.getElementById("takeaway-store").value);
+                  var name = document.getElementById("add-takeaway-name").value;
+
+                  for (let i = 0; i < takeaways.length; i++) {
+                      //console.log(takeaways[i].name + ' == ' + name);
+                      if(takeaways[i].name == document.getElementById("add-takeaway-name").value){
+                          console.log(takeaways[i]);
+                          document.getElementById("add-takeaway-id").value = takeaways[i].id;
+                          document.getElementById("add-takeaway-details").value = takeaways[i].details;							
+                      }
+                      }
+                  }
+          </script>
+
+          <form>
+              <input type="hidden" class="form-control" id="add-takeaway-id" value="">					
+              <div class="form-group">
+                  <label for="add-takeaway-description" class="col-form-description">Details:</label>
+                  <div>
+                      <textarea class="form-control" id="add-takeaway-details"></textarea>
+                  </div>
+              </div>		  			  
+          </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeAddTakeawayModal();">Close</button>
+        <button type="button" class="btn btn-primary" onclick="addTakeaway();">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<textarea class="form-control" id="quote-store" rows="5" style="display: none;"></textarea>
+<div class="modal fade bd-example-modal-lg" id="addQuote" tabindex="-1" clip="dialog" aria-labelledby="addQuoteLabel" aria-hidden="true" style="width: 100%">
+  <div class="modal-dialog modal-xl" clip="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addQuoteLabel">New Quote</h5>
+        <input type="text" id="add-quote-episode-id" value="">
+        <input type="hidden" id="add-quote-area-id" value="">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeAddQuoteModal();">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">			
+          <script>
+              function addExistingQuote()
+                  {
+
+                  console.log("Changing!");
+                  
+                  var quotes = JSON.parse(document.getElementById("quote-store").value);
+                  var name = document.getElementById("add-quote-name").value;
+
+                  for (let i = 0; i < quotes.length; i++) {
+                      //console.log(quotes[i].name + ' == ' + name);
+                      if(quotes[i].name == document.getElementById("add-quote-name").value){
+                          console.log(quotes[i]);
+                          document.getElementById("add-quote-id").value = quotes[i].id;
+                          document.getElementById("add-quote-text").value = quotes[i].text;							
+                      }
+                      }
+                  }
+          </script>
+          <form>
+              <input type="hidden" class="form-control" id="add-quote-id" value="">					
+              <div class="form-group">
+                  <label for="add-quote-text" class="col-form-description">Text:</label>
+                  <div>
+                      <textarea class="form-control" id="add-quote-text"></textarea>
+                  </div>
+              </div>			  
+          </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeAddQuoteModal();">Close</button>
+        <button type="button" class="btn btn-primary" onclick="addQuote();">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<textarea class="form-control" id="segment-store" rows="5" style="display: none;"></textarea>
+<div class="modal fade bd-example-modal-lg" id="addSegment" tabindex="-1" clip="dialog" aria-labelledby="addSegmentLabel" aria-hidden="true" style="width: 100%">
+  <div class="modal-dialog modal-xl" clip="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addSegmentLabel">New Segment</h5>
+        <input type="hidden" id="add-segment-episode-id" value="">
+        <input type="hidden" id="add-segment-area-id" value="">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeAddSegmentModal();">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">			
+          <form>
+              <input type="hidden" class="form-control" id="add-segment-id" value="">
+              <div class="form-group">
+                  <label for="add-segment-title" class="col-form-label">Title:</label>
+                  <div class="autocomplete">
+                      <input type="text" class="form-control" id="add-segment-title">
+                  </div>
+              </div>					
+              <div class="form-group">
+                  <label for="add-segment-description" class="col-form-label">Transcript:</label>
+                  <div>
+                      <textarea class="form-control" id="add-segment-transcript"></textarea>
+                  </div>
+              </div>
+              <div class="form-group">
+				<label for="add-segment-video_url" class="col-form-label">Video URL:</label>
+				<div class="autocomplete">
+					<input type="text" class="form-control" id="add-segment-video_url">
+				</div>
+			</div>					
+			<div class="form-group">
+				<label for="add-segment-video_embed" class="col-form-label">Video Embed:</label>
+				<div>
+					<textarea class="form-control" id="add-segment-video_embed"></textarea>
+				</div>
+			</div>				  			  
+          </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeAddSegmentModal();">Close</button>
+        <button type="button" class="btn btn-primary" onclick="addSegment();">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<textarea class="form-control" id="link-store" rows="5" style="display: none;"></textarea>
+<div class="modal fade bd-example-modal-lg" id="addLink" tabindex="-1" clip="dialog" aria-labelledby="addLinkLabel" aria-hidden="true" style="width: 100%">
+  <div class="modal-dialog modal-xl" clip="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addLinkLabel">New Link</h5>
+        <input type="hidden" id="add-link-episode-id" value="">
+        <input type="hidden" id="add-link-area-id" value="">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeAddLinkModal();">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">			
+          <script>
+              function addExistingLink()
+                  {
+
+                  console.log("Changing!");
+                  
+                  var links = JSON.parse(document.getElementById("link-store").value);
+                  var title = document.getElementById("add-link-title").value;
+				  var description = document.getElementById("add-link-description").value;
+				  var url = document.getElementById("add-link-url").value;
+
+                  for (let i = 0; i < links.length; i++) {
+                      //console.log(links[i].name + ' == ' + name);
+                      if(links[i].name == document.getElementById("add-link-name").value){
+                          console.log(links[i]);
+                          document.getElementById("add-link-id").value = links[i].id;
+                          document.getElementById("add-link-title").value = links[i].title;							
+						  document.getElementById("add-link-description").value = links[i].description;
+						  document.getElementById("add-link-url").value = links[i].url;
+                      }
+                      }
+                  }
+          </script>
+          <form>
+              <input type="hidden" class="form-control" id="add-link-id" value="">
+              <div class="form-group">
+                  <label for="add-link-title" class="col-form-label">Title:</label>
+                  <div class="autocomplete">
+                      <input type="text" class="form-control" id="add-link-title">
+                  </div>
+              </div>					
+              <div class="form-group">
+                  <label for="add-link-description" class="col-form-label">Description:</label>
+                  <div>
+                      <textarea class="form-control" id="add-link-description"></textarea>
+                  </div>
+              </div>
+              <div class="form-group">
+				<label for="add-link-url" class="col-form-label">URL:</label>
+				<div class="autocomplete">
+					<input type="text" class="form-control" id="add-link-url">
+				</div>
+			</div>									  			  
+          </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeAddLinkModal();">Close</button>
+        <button type="button" class="btn btn-primary" onclick="addLink();">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<textarea class="form-control" id="guest-store" rows="5" style="display: none;"></textarea>
+<div class="modal fade bd-example-modal-lg" id="addGuest" tabindex="-1" clip="dialog" aria-labelledby="addGuestLabel" aria-hidden="true" style="width: 100%">
+  <div class="modal-dialog modal-xl" clip="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addGuestLabel">New Guest</h5>
+        <input type="hidden" id="add-guest-episode-id" value="">
+        <input type="hidden" id="add-guest-area-id" value="">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeAddGuestModal();">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">			
+          <form>
+              <input type="hidden" class="form-control" id="add-guest-id" value="">
+              <div class="form-group">
+                  <label for="add-guest-first_name" class="col-form-name">First Name:</label>
+                  <div class="autocomplete">
+                      <input type="text" class="form-control" id="add-guest-first_name">
+                  </div>
+              </div>	
+              <div class="form-group">
+				<label for="add-guest-last_name" class="col-form-name">Last Name:</label>
+				<div class="autocomplete">
+					<input type="text" class="form-control" id="add-guest-last_name">
+				</div>
+			</div>				  				
+			<div class="form-group">
+				<label for="add-guest-guest_bio" class="col-form-label">Guest Bio:</label>
+				<div>
+					<textarea class="form-control" id="add-guest-guest_bio"></textarea>
+				</div>
+			</div>	
+			<div class="form-group">
+				<label for="add-guest-white" class="col-form-name">White:</label>
+				<div class="autocomplete">
+					<input type="text" class="form-control" id="add-guest-white">
+				</div>
+			</div>	
+			<div class="form-group">
+				<label for="add-guest-male" class="col-form-name">Male:</label>
+				<div class="autocomplete">
+					<input type="text" class="form-control" id="add-guest-male">
+				</div>
+			</div>		
+			<div class="form-group">
+				<label for="add-guest-company_name" class="col-form-name">Company Name:</label>
+				<div class="autocomplete">
+					<input type="text" class="form-control" id="add-guest-company_name">
+				</div>
+			</div>	
+			<div class="form-group">
+				<label for="add-guest-company_description" class="col-form-label">Company Description::</label>
+				<div>
+					<textarea class="form-control" id="add-guest-company_description"></textarea>
+				</div>
+			</div>	
+			<div class="form-group">
+				<label for="add-guest-company_website" class="col-form-name">Company Website:</label>
+				<div class="autocomplete">
+					<input type="text" class="form-control" id="add-guest-company_website">
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="add-guest-guest_linkedin" class="col-form-name">Guest LinkedIn:</label>
+				<div class="autocomplete">
+					<input type="text" class="form-control" id="add-guest-guest_linkedin">
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="add-guest-guest_twitter" class="col-form-name">Guest Twitter:</label>
+				<div class="autocomplete">
+					<input type="text" class="form-control" id="add-guest-guest_twitter">
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="add-guest-company_logo" class="col-form-name">Company Logo:</label>
+				<div class="autocomplete">
+					<input type="text" class="form-control" id="add-guest-company_logo">
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="add-guest-guest_photo_raw" class="col-form-name">Guest Photo (Raw):</label>
+				<div class="autocomplete">
+					<input type="text" class="form-control" id="add-guest-guest_photo_raw">
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="add-guest-guest_photo_final" class="col-form-name">Guest Photo (Final):</label>
+				<div class="autocomplete">
+					<input type="text" class="form-control" id="add-guest-guest_photo_final">
+				</div>
+			</div>																		
+
+          </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeAddGuestModal();">Close</button>
+        <button type="button" class="btn btn-primary" onclick="addGuest();">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<textarea class="form-control" id="clip-store" rows="5" style="display: none;"></textarea>
+<div class="modal fade bd-example-modal-lg" id="addClip" tabindex="-1" clip="dialog" aria-labelledby="addClipLabel" aria-hidden="true" style="width: 100%">
+  <div class="modal-dialog modal-xl" clip="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addClipLabel">New Clip</h5>
+        <input type="hidden" id="add-clip-episode-id" value="">
+        <input type="hidden" id="add-clip-area-id" value="">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeAddClipModal();">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">			
+          <form>
+              <input type="hidden" class="form-control" id="add-clip-id" value="">
+              <div class="form-group">
+                  <label for="add-clip-name" class="col-form-name">Title:</label>
+                  <div class="autocomplete">
+                      <input type="text" class="form-control" id="add-clip-title">
+                  </div>
+              </div>					
+              <div class="form-group">
+                  <label for="add-clip-transcript" class="col-form-label">Transcript:</label>
+                  <div>
+                      <textarea class="form-control" id="add-clip-transcript"></textarea>
+                  </div>
+              </div>	
+              <div class="form-group">
+				<label for="add-clip-name" class="col-form-name">Video URL:</label>
+				<div class="autocomplete">
+					<input type="text" class="form-control" id="add-clip-video_url">
+				</div>
+			</div>	
+			<div class="form-group">
+				<label for="add-clip-video_embed" class="col-form-label">Video Embed:</label>
+				<div>
+					<textarea class="form-control" id="add-clip-video_embed"></textarea>
+				</div>
+			</div>						  		  
+          </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeAddClipModal();">Close</button>
+        <button type="button" class="btn btn-primary" onclick="addClip();">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade bd-example-modal-lg" id="viewEpisode" tabindex="-1" clip="dialog" aria-labelledby="viewEpisodeLabel" aria-hidden="true" style="width: 100%">
+  <div class="modal-dialog modal-xl" clip="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addClipLabel">Episode View</h5>
+        <input type="hidden" id="add-clip-episode-id" value="">
+        <input type="hidden" id="add-clip-area-id" value="">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeViewEpisodeModal();">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="viewEpisodeBody">			
+		HELLO!!!
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeViewEpisodeModal();">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade bd-example-modal-lg" id="viewSegmentOutline" tabindex="-1" clip="dialog" aria-labelledby="viewSegmentOutlineLabel" aria-hidden="true" style="width: 100%">
+	<div class="modal-dialog modal-xl" clip="document">
+	  <div class="modal-content">
+		<div class="modal-header">
+		  <h5 class="modal-title" id="addClipLabel">Episode View</h5>
+		  <input type="hidden" id="add-clip-episode-id" value="">
+		  <input type="hidden" id="add-clip-area-id" value="">
+		  <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeviewSegmentOutline();">
+			<span aria-hidden="true">&times;</span>
+		  </button>
+		</div>
+		<div class="modal-body" id="viewSegmentOutlineBody">			
+		  HELLO!!!
+		</div>
+		<div class="modal-footer">
+		  <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeviewSegmentOutline();">Close</button>
+		</div>
+	  </div>
+	</div>
+  </div>

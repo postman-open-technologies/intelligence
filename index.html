@@ -1,0 +1,249 @@
+---
+layout: default
+title: Explore
+---
+
+
+<script>
+
+	const blueprint_base_url = '{{ site.blueprints_base_url }}';
+	const elements_base_url = '{{ site.elements_base_url }}';
+	const tag_base_url = '{{ site.tags_base_url }}';
+	const roles_base_url = '{{ site.roles_base_url }}';
+	const links_base_url = '{{ site.links_base_url }}';
+	const videos_base_url = '{{ site.videos_base_url }}';
+	const questions_base_url = '{{ site.questions_base_url }}';
+	const answers_base_url = '{{ site.answers_base_url }}';
+
+	function filterBlueprints(){
+
+		var search = '';
+
+		var role = '';
+		var first = 1;
+		var filter_roles = [];
+		var roleList = document.getElementsByName("role");
+		roles = Array.prototype.slice.call(roleList,0); 
+		roles.forEach(function(node){ 
+			if(node.checked==true){
+				if(first==1){
+					role = node.value;
+					first = 0;
+				}
+				else{
+					role = "," + node.value;
+					}
+				}
+		});
+
+		var tags = '';
+		var first = 1;
+		var tagList = document.getElementsByName("tag");
+		allTags = Array.prototype.slice.call(tagList,0); 
+		allTags.forEach(function(node){ 			
+			if(node.checked==true){
+				if(first==1){
+					tags += node.value;
+					first = 0;
+				}
+				else{
+					tags += "," + node.value;
+					}
+				}
+		});		
+		
+		console.log("search: " + search);
+		console.log("role: " + role);
+		console.log("tags: " + tags);
+
+		listBlueprints(search,tags,role);
+
+	}
+
+	function listTags(){
+
+		console.log("loading tags...");
+
+		const options = {
+			method: 'get',
+			headers: {
+				"Content-Type": "application/json"
+			}
+		};		
+
+		fetch(tag_base_url + '/tags?limit=50&page=0',options)
+			.then(function(response) {
+				if (!response.ok) {
+					console.log('Error with Status Code: ' + response.status);
+					return;
+				}
+				response.json().then(function(data) {
+					var rows = '';
+					console.log(data);
+					if(data){
+						for (let i = 0; i < data.length; i++) {	
+							rows += '<div class="form-check align-top">';
+							rows += '<input name="tag" class="form-check-input" type="checkbox" value="' + data[i].name + '" id="tagFilter" onClick="filterBlueprints()">';
+							rows += '<label class="form-check-label" for="flexCheckDefault">';
+							rows += data[i].name;
+							rows += '</label>';
+							rows += '</div>';							
+						}								
+					}
+					document.getElementById('tags').innerHTML = rows;
+				});
+			})
+			.catch(function(err) {
+				console.log('Error: ' + err);
+		});
+
+		}		
+
+
+			function listRoles(){
+
+				console.log("loading roles...");
+
+				const options = {
+					method: 'get',
+					headers: {
+						"Content-Type": "application/json"
+					}
+				};		
+
+				fetch(roles_base_url + '/roles?limit=50&page=0',options)
+					.then(function(response) {
+						if (!response.ok) {
+							console.log('Error with Status Code: ' + response.status);
+							return;
+						}
+						response.json().then(function(data) {
+							var rows = '';
+							if(data){
+								for (let i = 0; i < data.length; i++) {	
+									rows += '<div class="form-check align-top">';
+									rows += '<input name="role" class="form-check-input" type="radio" value="' + data[i].name + '" id="role' + data[i].id + '" onClick="filterBlueprints()">';
+									rows += '<label class="form-check-label" for="flexCheckDefault">';
+									rows += data[i].name;
+									rows += '</label>';
+									rows += '</div>';							
+								}								
+							}
+							document.getElementById('roles').innerHTML = rows;
+						});
+					})
+					.catch(function(err) {
+						console.log('Error: ' + err);
+				});
+
+				}	
+
+			function blueprintRow(row,i){
+				var html = '';
+
+				html += '<div class="accordion-item" id="blueprint-' + i + '">';
+				html += '<h2 class="accordion-header" id="heading-' + i + '">';
+				html += '<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-' + i + '" aria-expanded="false" aria-controls="collapse-' + i + '" style="color: #000;">';
+				html += row.name + ' (Level: ' + row.level + ')';
+				html += '</button>';
+				html += '</h2>';
+				html += '<div id="collapse-' + i + '" class="accordion-collapse collapse" aria-labelledby="heading-' + i + '" data-bs-parent="#accordion-' + i + '">';
+				html += '<div class="accordion-body">';
+				html += '<table width="100%">';
+				html += '<tr>';
+				html += '<td valign="top" align="center">';
+				html += '<img src="' + row.image + '" width="225" align="left" style="padding: 10px;">';
+				html += '</td>';
+				html += '<td>';
+				html += '<p>' + row.description + '</p>';
+				html += '<p><strong>Links: </strong></p>';
+				html += '<ul>';
+				html += '<li><a href="https://www.postman.com/postman/workspace/postman-open-technologies-lifecycle/documentation/' + row.collection_id + '" target="_blank">View Blueprint</a></li>';
+				html += '<li><a href="{{ blueprint.blog_url }}" target="_blank">View Blog Post</a></li>';
+				html += '</ul>';
+				html += '<strong>Tags: </strong>tags,tags';
+				html += '</td>';
+				html += '</tr>';
+				html += '</table>';
+				html += '</div>';
+				html += '</div>';
+				html += '</div>';										
+
+				return html;
+			}
+		
+			function listBlueprints(search,tags,role){
+
+				var page = 0;
+				var limit = 100;
+
+
+				const options = {
+					method: 'get',
+					headers: {
+						"Content-Type": "application/json"
+					}
+				};		
+				var path = blueprint_base_url + '/blueprints/?page=' + page + '&limit=' + limit + '&search=' + search + '&tags=' + tags + '&role=' + role;
+				console.log(path);
+				fetch(path,options)
+					.then(function(response) {
+						if (!response.ok) {
+							console.log('Error with Status Code: ' + response.status);
+							return;
+						}
+						response.json().then(function(data) {
+							var rows = '';
+							console.log(data);
+							if(data){
+								for (let i = 0; i < data.length; i++) {
+									rows += blueprintRow(data[i],i);
+								}
+							}
+							document.getElementById("blueprintAccordian").innerHTML = rows;
+						});
+					})
+					.catch(function(err) {
+						console.log('Error: ' + err);
+				});
+				
+			}			
+
+			if (window.addEventListener){
+				window.addEventListener("load", listRoles, false);
+				window.addEventListener("load", listTags, false);
+				window.addEventListener("load", listBlueprints('','',''), false);
+			}
+			else if (window.attachEvent){
+				window.attachEvent("onload", listRoles);
+				window.attachEvent("onload", listTags);
+				window.attachEvent("onload", listBlueprints('','',''));
+			}
+			else {
+				window.onload = listRoles;		
+				window.onload = listTags;
+				window.onload = listBlueprints('','','');
+			}
+
+</script>
+
+<div class="container" style="padding-top: 70px;">
+	<div class="row align-top">
+		<div class="col-2" style="padding-left: 35px;" id="roles"></div>
+		<div class="col-8">
+
+			<style>
+				.accordion{
+					background-color: #000;
+				}
+			</style>
+
+			<div class="accordion" id="blueprintAccordian"></div>
+
+		</div>	
+		<div class="col-2" id="tags"></div>
+	</div>
+	<div class="col-2"></div>	
+</div>
+
+
