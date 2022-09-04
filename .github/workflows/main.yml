@@ -93,3 +93,27 @@ jobs:
             aws_region: us-west-1
             function_name: m-s-apisbatch-po
             zip_file: m-s-apisbatch-po.zip            
+      - name: /apis/pull get lambda deploy zip
+        uses: postman-open-technologies/intelligence@main
+        with:
+            args: zip -qq -r m-s-apispull-g.zip apis/pull/get/index.js node_modules
+      - name: intelligence get lambda deploy
+        uses: appleboy/lambda-action@master
+        with:
+            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
+            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+            aws_region: us-west-1
+            function_name: m-s-apispull-g
+            zip_file: m-s-apispull-g.zip
+      - name: /apis/pulled get lambda deploy zip
+        uses: postman-open-technologies/intelligence@main
+        with:
+            args: zip -qq -r m-s-apispulled-g.zip apis/pulled/get/index.js node_modules
+      - name: intelligence get lambda deploy
+        uses: appleboy/lambda-action@master
+        with:
+            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
+            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+            aws_region: us-west-1
+            function_name: m-s-apispulled-g
+            zip_file: m-s-apispulled-g.zip            

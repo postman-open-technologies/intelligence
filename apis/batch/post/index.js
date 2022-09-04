@@ -11,27 +11,37 @@ exports.handler = vandium.generic()
     database : process.env.database
     });
 
-    for (let i = 0; i < event.length; i++) {
+  var sql = '';
+  var entry_count = 0;
+  
+    sql += 'INSERT INTO apis(';
+    
+    
+    var total_properties = Object.keys(event[0]).length;
+    var total_entries = Object.keys(event).length;
+    
+    console.log(total_properties);
+    console.log(total_entries);
 
-      var sql = 'INSERT INTO apis(';
-      
-      var total_properties = Object.keys(event[i]).length;
-      
-      var property_count = 1;
-      for (const [key, value] of Object.entries(event[i])) {
-        sql += key;
-        if(property_count != total_properties){
-          sql += ',';
-        }
-        property_count++;
+    var property_count = 1;
+    for (const [key, value] of Object.entries(event[0])) {
+      sql += key;
+      if(property_count != total_properties){
+        sql += ',';
       }
-        
-      sql += ')';
+      property_count++;
+    }
+      
+    sql += ')';
 
-      sql += ' VALUES(';
+    sql += ' VALUES';  
+
+    Object.keys(event).forEach(entry => {
+      
+      sql += '('; 
       
       var property_count = 1;
-      for (const [key, value] of Object.entries(event[i])) {
+      for (const [key, value] of Object.entries(event[entry])) {
         sql += connection.escape(value);
         if(property_count != total_properties){
           sql += ',';
@@ -40,18 +50,23 @@ exports.handler = vandium.generic()
       }
 
       sql += ")";
+      
+      entry_count++;
+
+      if(entry_count < total_entries){
+        sql += ",";
+      }
+
+    });
     
-      connection.query(sql, function (error, results, fields) {
-    
-        if(i =- event.length){
-        var response = {};
-        response['results'] = "Inserted " + event.length + " rows.";
+    connection.query(sql, function (error, results, fields) {
+      
+      var response = {};
+      response.inserted_rows = results.affectedRows;
+      
+      callback( null, response );
 
-        callback( null, response );
-        }
-
-      });
-
-    }
+    });
+    connection.close;    
 
 });
