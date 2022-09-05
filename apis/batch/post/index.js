@@ -67,6 +67,6 @@ exports.handler = vandium.generic()
       callback( null, response );
 
     });
-    connection.close;    
+    connection.end();   
 
 });

@@ -13,8 +13,7 @@ exports.handler = vandium.generic()
 
     var sql = 'SELECT * FROM apis WHERE id = ' + connection.escape(event.api_id);
     connection.query(sql, function (error, results, fields) {
-
     callback( null, results[0] );
-
-  });
+    });
+    connection.end();
 });

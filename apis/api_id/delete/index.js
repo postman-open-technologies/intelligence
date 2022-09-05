@@ -13,8 +13,7 @@ exports.handler = vandium.generic()
 
     var sql = 'DELETE FROM apis WHERE id = ' + connection.escape(event.api_id);
     connection.query(sql, function (error, results, fields) {
-
-    callback( null );
-
-  });
+      callback( null );
+    });
+    connection.end();
 });
