@@ -1,6 +1,7 @@
 const vandium = require('vandium');
 const mysql  = require('mysql');
 const https = require('https');
+var req = require('request');
 
 exports.handler = vandium.generic()
   .handler( (event, context, callback) => {
@@ -16,36 +17,22 @@ exports.handler = vandium.generic()
     connection.query(sql, function (error, results, fields) {
 
       const url = new URL(results[0].url);
-        
-      console.log("hostname: " + url.hostname);
-      console.log("pathname: " + url.pathname);
-
-      var options = {
-        hostname: url.hostname,
-        path: url.pathname,
-        method: 'get',
-        port: 443,
+      
+    const params = {
+        url: results[0].url,
         headers: {
              'Accept': 'application/json',
              'User-Agent': 'Postman+Open+Tech',
              'Authorization': 'Bearer ' + process.env.github_token
            }
-      };
-      console.log(options);
-        const req = https.request(options, (res) => {
-            let body = '';
-
-            res.on('data', (chunk) => {
-                body += chunk.toString();
-            });
-            
-            res.on('end', () => {
-                console.log('Body: ', body);
-                callback( null, body ); 
-            });
-            
-        });
-        req.end();      
+    };
+    req.post(params, function(err, res, body) {
+        if(err){
+            console.log('------error------', err);
+        } else{
+            console.log('------success--------', body);
+        }
+    });  
 
   });
   connection.end();
