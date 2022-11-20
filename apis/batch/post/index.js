@@ -23,21 +23,6 @@ exports.handler = vandium.generic()
       
     });
     
-    sql = sql.substr(0,sql.length-1);
-    
-    connection.query(sql, function (error, results, fields) {
-
-      var response = {};
-      response.inserted = results.affectedRows;
-      
-      var sql2 = 'DELETE S1 FROM apis AS S1 INNER JOIN apis AS S2 WHERE S1.id < S2.id AND S1.url = S2.url;  ';
-      connection.query(sql2, function (error, results2, fields) {
-  
-        callback( null, response );
-  
-      });
-
-    });
     connection.end();   
 
 });

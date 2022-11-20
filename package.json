@@ -4,9 +4,10 @@
   "description": "This is for managing blueprints.",
   "main": "index.js",
   "dependencies": {
-    "vandium": "*",
-    "mysql": "*",
     "async": "*",
-    "pool": "*"
+    "https": "^1.0.0",
+    "mysql": "*",
+    "pool": "*",
+    "vandium": "*"
   }
 }
