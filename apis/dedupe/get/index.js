@@ -12,7 +12,7 @@ exports.handler = vandium.generic()
     });
   
 
-    var sql = "delete from apis where url in(select url from apis_file);";
+    var sql = "DELETE S1 FROM apis AS S1 INNER JOIN apis AS S2 WHERE S1.id < S2.id AND S1.url = S2.url;";
     connection.query(sql, function (error, results, fields) {
 
     callback( null, results );
