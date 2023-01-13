@@ -12,7 +12,7 @@ jobs:
     - name: /github/search get lambda deploy zip
       uses: postman-open-technologies/intelligence@main
       with:
-          args: zip -qq -r m-s-githubsearch-g.zip github/search/get/index.js node_modules
+          args: zip -qq -r m-s-githubsearch-g.zip . -i github/search/get/index.js node_modules
     - name: intelligence get lambda deploy
       uses: appleboy/lambda-action@master
       with:
