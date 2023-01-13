@@ -1,4 +1,4 @@
-name: APIs  
+name: Intelligence  
 on: [push]
 jobs:
   deploy_source:
@@ -8,88 +8,100 @@ jobs:
         node-version: [12.x]
     runs-on: ubuntu-latest
     steps:
-    
-      - name: /github/search post lambda deploy zip
-        uses: postman-open-technologies/intelligence@main
-        with:
-            args: zip -qq -r m-s-githubsearch-po.zip github/search/post/index.js node_modules
-      - name: intelligence get lambda deploy
-        uses: appleboy/lambda-action@master
-        with:
-            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
-            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-            aws_region: us-west-1
-            function_name: m-s-githubsearch-po
-            zip_file: m-s-githubsearch-po.zip
-      - name: /github/harvest get lambda deploy zip
-        uses: postman-open-technologies/intelligence@main
-        with:
-            args: zip -qq -r m-s-githubharvest-g.zip github/harvest/get/index.js node_modules
-      - name: intelligence get lambda deploy
-        uses: appleboy/lambda-action@master
-        with:
-            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
-            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-            aws_region: us-west-1
-            function_name: m-s-githubharvest-g
-            zip_file: m-s-githubharvest-g.zip
-      - name: /github/harvest post lambda deploy zip
-        uses: postman-open-technologies/intelligence@main
-        with:
-            args: zip -qq -r m-s-githubharvest-po.zip github/harvest/post/index.js node_modules
-      - name: intelligence get lambda deploy
-        uses: appleboy/lambda-action@master
-        with:
-            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
-            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-            aws_region: us-west-1
-            function_name: m-s-githubharvest-po
-            zip_file: m-s-githubharvest-po.zip
-      - name: /github/meta get lambda deploy zip
-        uses: postman-open-technologies/intelligence@main
-        with:
-            args: zip -qq -r m-s-githubmeta-g.zip github/meta/get/index.js node_modules
-      - name: intelligence get lambda deploy
-        uses: appleboy/lambda-action@master
-        with:
-            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
-            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-            aws_region: us-west-1
-            function_name: m-s-githubmeta-g
-            zip_file: m-s-githubmeta-g.zip
-      - name: /github/meta post lambda deploy zip
-        uses: postman-open-technologies/intelligence@main
-        with:
-            args: zip -qq -r m-s-githubmeta-po.zip github/meta/post/index.js node_modules
-      - name: intelligence get lambda deploy
-        uses: appleboy/lambda-action@master
-        with:
-            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
-            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-            aws_region: us-west-1
-            function_name: m-s-githubmeta-po
-            zip_file: m-s-githubmeta-po.zip
-      - name: /github/validate get lambda deploy zip
-        uses: postman-open-technologies/intelligence@main
-        with:
-            args: zip -qq -r m-s-githubvalidate-g.zip github/validate/get/index.js node_modules
-      - name: intelligence get lambda deploy
-        uses: appleboy/lambda-action@master
-        with:
-            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
-            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-            aws_region: us-west-1
-            function_name: m-s-githubvalidate-g
-            zip_file: m-s-githubvalidate-g.zip
-      - name: /github/validate post lambda deploy zip
-        uses: postman-open-technologies/intelligence@main
-        with:
-            args: zip -qq -r m-s-githubvalidate-po.zip github/validate/post/index.js node_modules
-      - name: intelligence get lambda deploy
-        uses: appleboy/lambda-action@master
-        with:
-            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
-            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-            aws_region: us-west-1
-            function_name: m-s-githubvalidate-po
-            zip_file: m-s-githubvalidate-po.zip
+
+      - name: /github/search get lambda deploy zip
+      uses: postman-open-technologies/intelligence@main
+      with:
+          args: zip -qq -r m-s-githubsearch-g.zip github/search/get/index.js node_modules
+    - name: intelligence get lambda deploy
+      uses: appleboy/lambda-action@master
+      with:
+          aws_access_key_id: ${/{secrets.AWS_ACCESS_KEY_ID}}
+          aws_secret_access_key: ${/{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_region: us-west-1
+          function_name: m-s-githubsearch-g
+          zip_file: m-s-githubsearch-g.zip
+    - name: /github/search post lambda deploy zip
+      uses: postman-open-technologies/intelligence@main
+      with:
+          args: zip -qq -r m-s-githubsearch-po.zip github/search/post/index.js node_modules
+    - name: intelligence get lambda deploy
+      uses: appleboy/lambda-action@master
+      with:
+          aws_access_key_id: ${/{secrets.AWS_ACCESS_KEY_ID}}
+          aws_secret_access_key: ${/{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_region: us-west-1
+          function_name: m-s-githubsearch-po
+          zip_file: m-s-githubsearch-po.zip
+    - name: /github/harvest get lambda deploy zip
+      uses: postman-open-technologies/intelligence@main
+      with:
+          args: zip -qq -r m-s-githubharvest-g.zip github/harvest/get/index.js node_modules
+    - name: intelligence get lambda deploy
+      uses: appleboy/lambda-action@master
+      with:
+          aws_access_key_id: ${/{secrets.AWS_ACCESS_KEY_ID}}
+          aws_secret_access_key: ${/{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_region: us-west-1
+          function_name: m-s-githubharvest-g
+          zip_file: m-s-githubharvest-g.zip
+    - name: /github/harvest post lambda deploy zip
+      uses: postman-open-technologies/intelligence@main
+      with:
+          args: zip -qq -r m-s-githubharvest-po.zip github/harvest/post/index.js node_modules
+    - name: intelligence get lambda deploy
+      uses: appleboy/lambda-action@master
+      with:
+          aws_access_key_id: ${/{secrets.AWS_ACCESS_KEY_ID}}
+          aws_secret_access_key: ${/{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_region: us-west-1
+          function_name: m-s-githubharvest-po
+          zip_file: m-s-githubharvest-po.zip
+    - name: /github/meta get lambda deploy zip
+      uses: postman-open-technologies/intelligence@main
+      with:
+          args: zip -qq -r m-s-githubmeta-g.zip github/meta/get/index.js node_modules
+    - name: intelligence get lambda deploy
+      uses: appleboy/lambda-action@master
+      with:
+          aws_access_key_id: ${/{secrets.AWS_ACCESS_KEY_ID}}
+          aws_secret_access_key: ${/{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_region: us-west-1
+          function_name: m-s-githubmeta-g
+          zip_file: m-s-githubmeta-g.zip
+    - name: /github/meta post lambda deploy zip
+      uses: postman-open-technologies/intelligence@main
+      with:
+          args: zip -qq -r m-s-githubmeta-po.zip github/meta/post/index.js node_modules
+    - name: intelligence get lambda deploy
+      uses: appleboy/lambda-action@master
+      with:
+          aws_access_key_id: ${/{secrets.AWS_ACCESS_KEY_ID}}
+          aws_secret_access_key: ${/{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_region: us-west-1
+          function_name: m-s-githubmeta-po
+          zip_file: m-s-githubmeta-po.zip
+    - name: /github/validate get lambda deploy zip
+      uses: postman-open-technologies/intelligence@main
+      with:
+          args: zip -qq -r m-s-githubvalidate-g.zip github/validate/get/index.js node_modules
+    - name: intelligence get lambda deploy
+      uses: appleboy/lambda-action@master
+      with:
+          aws_access_key_id: ${/{secrets.AWS_ACCESS_KEY_ID}}
+          aws_secret_access_key: ${/{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_region: us-west-1
+          function_name: m-s-githubvalidate-g
+          zip_file: m-s-githubvalidate-g.zip
+    - name: /github/validate post lambda deploy zip
+      uses: postman-open-technologies/intelligence@main
+      with:
+          args: zip -qq -r m-s-githubvalidate-po.zip github/validate/post/index.js node_modules
+    - name: intelligence get lambda deploy
+      uses: appleboy/lambda-action@master
+      with:
+          aws_access_key_id: ${/{secrets.AWS_ACCESS_KEY_ID}}
+          aws_secret_access_key: ${/{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_region: us-west-1
+          function_name: m-s-githubvalidate-po
+          zip_file: m-s-githubvalidate-po.zip
