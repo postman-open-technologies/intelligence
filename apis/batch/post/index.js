@@ -16,12 +16,18 @@ exports.handler = vandium.generic()
 
     Object.keys(event).forEach(entry => {
       
-      var property_count = 1;
       for (const [key, value] of Object.entries(event.urls)) {
-        sql += "('" + event.channel + "','" + event.formatchannel + "','" + event.vocabulary + "'," + connection.escape(value) + "),";
+        sql += "('" + event.channel + "','" + event.format + "','" + event.vocabulary + "'," + connection.escape(value) + "),";
       }
       
     });
+  
+    sql = sql.substring(0, sql.length-1);
+    connection.query(sql, function (error, results, fields) {
+
+      callback( null, results );
+  
+    });    
     
     connection.end();   
 

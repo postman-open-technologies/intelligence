@@ -11,7 +11,7 @@ exports.handler = vandium.generic()
     database : process.env.database
     });
 
-    var sql = "delete from apis where url in(select url from apis_file)";
+    var sql = "DELETE FROM apis WHERE url IN(SELECT url FROM apis_file)";
     connection.query(sql, function (error, results, fields) {
 
     callback( null, results );
