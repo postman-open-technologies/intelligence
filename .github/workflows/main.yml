@@ -9,18 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: /github/search get lambda deploy zip
-        uses: postman-open-technologies/intelligence@main
-        with:
-            args: zip -qq -r m-s-githubsearch-g.zip -i github/search/get/index.js node_modules
-      - name: intelligence get lambda deploy
-        uses: appleboy/lambda-action@master
-        with:
-            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
-            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-            aws_region: us-west-1
-            function_name: m-s-githubsearch-g
-            zip_file: m-s-githubsearch-g.zip
       - name: /github/search post lambda deploy zip
         uses: postman-open-technologies/intelligence@main
         with:
