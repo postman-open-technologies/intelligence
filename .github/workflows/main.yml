@@ -134,12 +134,12 @@ jobs:
       - name: /github/web post lambda deploy zip
         uses: postman-open-technologies/intelligence@main
         with:
-            args: zip -qq -r m-s-githubweb-po.zip github/web/post/index.js node_modules
+            args: zip -qq -r m-s-websearch-po.zip github/web/post/index.js node_modules
       - name: intelligence get lambda deploy
         uses: appleboy/lambda-action@master
         with:
             aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
             aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
             aws_region: us-west-1
-            function_name: m-s-githubweb-po
-            zip_file: m-s-githubweb-po.zip            
+            function_name: m-s-websearch-po
+            zip_file: m-s-websearch-po.zip            
