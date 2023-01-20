@@ -11,37 +11,7 @@ exports.handler = vandium.generic()
     database : process.env.database
     });
     
-    var search = 0;
-    if(event.search){
-      search = event.search;
-    }    
-    
-    var tags = 0;
-    if(event.tags){
-      tags = event.tags;
-    }   
-    
-    var role = 0;
-    if(event.role){
-      role = event.role;
-    }       
-    
-    var page = 0;
-    if(event.page){
-      page = event.page;
-    }
-    
-    var limit = 5;
-    if(event.limit){
-      limit = event.limit;
-    }   
-    if(limit > 25){
-      limit = 25;
-    }
-
-    var sql = "SELECT * FROM apis e WHERE pulled = 0";
-    sql += " ORDER BY id ASC";
-    sql += " LIMIT " + page + "," + limit;
+    var sql = "SELECT id,pull_name,pull_path,url,publish_path,pull_format,pull_size,vocabulary,publish_metadata_path FROM github_targets e WHERE and published_openapi = 1 AND published_metadata = 0 ORDER BY RAND() LIMIT 1";
     connection.query(sql, function (error, results, fields) {
 
     callback( null, results );
