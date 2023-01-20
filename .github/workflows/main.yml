@@ -58,6 +58,30 @@ jobs:
             aws_region: us-west-1
             function_name: m-s-githubharvest-po
             zip_file: m-s-githubharvest-po.zip
+      - name: /github/file get lambda deploy zip
+        uses: postman-open-technologies/intelligence@main
+        with:
+            args: zip -qq -r m-s-githubfile-g.zip github/file/get/index.js node_modules
+      - name: intelligence get lambda deploy
+        uses: appleboy/lambda-action@master
+        with:
+            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
+            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+            aws_region: us-west-1
+            function_name: m-s-githubfile-g
+            zip_file: m-s-githubfile-g.zip
+      - name: /github/file post lambda deploy zip
+        uses: postman-open-technologies/intelligence@main
+        with:
+            args: zip -qq -r m-s-githubfile-po.zip github/file/post/index.js node_modules
+      - name: intelligence get lambda deploy
+        uses: appleboy/lambda-action@master
+        with:
+            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
+            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+            aws_region: us-west-1
+            function_name: m-s-githubfile-po
+            zip_file: m-s-githubfile-po.zip            
       - name: /github/meta get lambda deploy zip
         uses: postman-open-technologies/intelligence@main
         with:

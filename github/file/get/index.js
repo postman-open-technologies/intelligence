@@ -11,7 +11,7 @@ exports.handler = vandium.generic()
     database : process.env.database
     });
     
-    var sql = "SELECT id,url FROM github_targets e WHERE pulled = 0 ORDER BY RAND() LIMIT 1";
+    var sql = "SELECT id,publish_path,body FROM github_targets e WHERE published_openapi = 0 ORDER BY RAND() LIMIT 1";
     connection.query(sql, function (error, results, fields) {
 
     callback( null, results );

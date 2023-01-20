@@ -10,12 +10,11 @@ exports.handler = vandium.generic()
     password : process.env.password,
     database : process.env.database
     });
-    
-    var sql = "SELECT id,url FROM github_targets e WHERE pulled = 0 ORDER BY RAND() LIMIT 1";
-    connection.query(sql, function (error, results, fields) {
 
-    callback( null, results );
+    var pull_id = event.pull_id;
 
-  });
-  connection.end();
+    var sql1 = "UPDATE github_targets SET body='',published_openapi=1  WHERE id = " + pull_id;
+    connection.query(sql1, function (error, results, fields) {  
+      callback( null, results ); 
+    });
 });
