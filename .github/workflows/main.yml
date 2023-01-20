@@ -192,3 +192,52 @@ jobs:
             aws_region: us-west-1
             function_name: m-s-webpull-po
             zip_file: m-s-webpull-po.zip             
+
+      - name: /web/file get lambda deploy zip
+        uses: postman-open-technologies/intelligence@main
+        with:
+            args: zip -qq -r m-s-webfile-g.zip web/file/get/index.js node_modules
+      - name: intelligence get lambda deploy
+        uses: appleboy/lambda-action@master
+        with:
+            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
+            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+            aws_region: us-west-1
+            function_name: m-s-webfile-g
+            zip_file: m-s-webfile-g.zip
+      - name: /web/file post lambda deploy zip
+        uses: postman-open-technologies/intelligence@main
+        with:
+            args: zip -qq -r m-s-webfile-po.zip web/file/post/index.js node_modules
+      - name: intelligence get lambda deploy
+        uses: appleboy/lambda-action@master
+        with:
+            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
+            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+            aws_region: us-west-1
+            function_name: m-s-webfile-po
+            zip_file: m-s-webfile-po.zip            
+      - name: /web/meta get lambda deploy zip
+        uses: postman-open-technologies/intelligence@main
+        with:
+            args: zip -qq -r m-s-webmeta-g.zip web/meta/get/index.js node_modules
+      - name: intelligence get lambda deploy
+        uses: appleboy/lambda-action@master
+        with:
+            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
+            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+            aws_region: us-west-1
+            function_name: m-s-webmeta-g
+            zip_file: m-s-webmeta-g.zip
+      - name: /web/meta post lambda deploy zip
+        uses: postman-open-technologies/intelligence@main
+        with:
+            args: zip -qq -r m-s-webmeta-po.zip web/meta/post/index.js node_modules
+      - name: intelligence get lambda deploy
+        uses: appleboy/lambda-action@master
+        with:
+            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
+            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+            aws_region: us-west-1
+            function_name: m-s-webmeta-po
+            zip_file: m-s-webmeta-po.zip            
