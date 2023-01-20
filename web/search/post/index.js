@@ -30,7 +30,7 @@ exports.handler = vandium.generic()
     var sql = "";
 
     for (let i = 0; i < links.length; i++) {
-      check_urls += "'" + links[i].url + "',";
+      check_urls += connection.escape(links[i].url) + ",";
     }
     
     var counter = 1;
@@ -40,7 +40,7 @@ exports.handler = vandium.generic()
     var sql1 = "SELECT url FROM web_targets WHERE url IN(" + check_urls + ")";
     console.log(sql1);
     
-    connection.query(sql1, function (error, targetResults, fields) {   
+    connection.query(sql1, function (error, targetResults, fields) {  
 
         // Loop through all users
         for (let i = 0; i < links.length; i++) {
