@@ -142,4 +142,28 @@ jobs:
             aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
             aws_region: us-west-1
             function_name: m-s-websearch-po
-            zip_file: m-s-websearch-po.zip            
+            zip_file: m-s-websearch-po.zip    
+      - name: /web/harvest get lambda deploy zip
+        uses: postman-open-technologies/intelligence@main
+        with:
+            args: zip -qq -r m-s-webharvest-g.zip web/harvest/get/index.js node_modules
+      - name: intelligence get lambda deploy
+        uses: appleboy/lambda-action@master
+        with:
+            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
+            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+            aws_region: us-west-1
+            function_name: m-s-webharvest-g
+            zip_file: m-s-webharvest-g.zip
+      - name: /web/harvest post lambda deploy zip
+        uses: postman-open-technologies/intelligence@main
+        with:
+            args: zip -qq -r m-s-webharvest-po.zip web/harvest/post/index.js node_modules
+      - name: intelligence get lambda deploy
+        uses: appleboy/lambda-action@master
+        with:
+            aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
+            aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+            aws_region: us-west-1
+            function_name: m-s-webharvest-po
+            zip_file: m-s-webharvest-po.zip                    
