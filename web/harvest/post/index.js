@@ -11,18 +11,80 @@ exports.handler = vandium.generic()
     database : process.env.database
     });
 
-    var pull_url = event.pull_url;
     var pull_id = event.pull_id;
-    var pull_path = event.pull_path;
-    var publish_path = event.publish_path;
-    var pull_name = event.pull_name;
-    var pull_size = event.pull_size;
-    var pull_format = event.pull_format;
-    var publish_metadata_path = event.publish_metadata_path;
-    var openapi = JSON.stringify(event.openapi);
+    var channel = event.channel;
+    var spec = event.spec;
+    var vocabulary = event.vocabulary;
+    var format = event.format;
+    var page = event.page;
 
-    var sql1 = "UPDATE web_targets SET body=" + connection.escape(openapi) + ",pull_path=" + connection.escape(pull_path) + ",publish_path = " + connection.escape(publish_path) + ",pull_name = " + connection.escape(pull_name) + ",pull_size = " + connection.escape(pull_size) + ",publish_metadata_path = " + connection.escape(publish_metadata_path) + ",pulled=1,published_openapi=0  WHERE id = " + pull_id;
-    connection.query(sql1, function (error, results, fields) {  
-      callback( null, results ); 
+    var links = event.links;
+    var check_urls = "";
+    var sql_begin = 'INSERT INTO web_sources(name,url,channel,vocabulary,format)  VALUES';
+    var sql = "";
+
+    for (let i = 0; i < links.length; i++) {
+      check_urls += connection.escape(links[i].url) + ",";
+    }
+    
+    var counter = 1;
+    
+    check_urls = check_urls.substr(0,check_urls.length-1);
+    
+    var sql1 = "SELECT url FROM web_sources WHERE url IN(" + check_urls + ")";
+    console.log(sql1);
+    
+    connection.query(sql1, function (error, targetResults, fields) {  
+
+        // Loop through all users
+        for (let i = 0; i < links.length; i++) {
+
+          var already_exist = 0;
+          for (let j = 0; j < targetResults.length; j++) {
+            if(links[i].url == targetResults[j].url){
+              already_exist = 1;  
+              }
+            }
+          
+          if(already_exist == 0){
+            
+            var name = links[i].name;
+            var url = links[i].url;
+          
+            sql += '(' + connection.escape(name) + ',' + connection.escape(url) + ',' + connection.escape(channel) + ',' + connection.escape(vocabulary) + ',' + connection.escape(format) + '),';                       
+          
+            }
+        }
+
+        if(sql != ''){
+          
+          sql = sql.substr(0,sql.length-1);
+          sql = sql_begin + sql;
+          connection.query(sql, function (error, insertResult, fields) {  
+            
+            var search_sql = 'UPDATE web_targets SET pulled = 1 WHERE id = " + pull_id';
+            console.log(search_sql);
+            connection.query(search_sql, function (error, result, fields) {              
+              if(error){
+                var response = {};
+                response.insert = 0
+                callback( null, response);
+              }
+              else{
+                var response = {};
+                response.insert = 1;
+                callback( null, response );
+                }
+                
+              }); 
+              
+            });   
+          }
+        else{
+          callback( null, "Nothing to INSERT" );
+        }
+      
     });
+
+
 });
