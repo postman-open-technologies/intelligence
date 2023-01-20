@@ -17,12 +17,14 @@ exports.handler = vandium.generic()
     var publish_path = event.publish_path;
     var pull_name = event.pull_name;
     var pull_size = event.pull_size;
+    var valid = event.valid;
     var pull_format = event.pull_format;
     var publish_metadata_path = event.publish_metadata_path;
     var openapi = JSON.stringify(event.openapi);
 
-    var sql1 = "UPDATE websources SET body=" + connection.escape(openapi) + ",pull_path=" + connection.escape(pull_path) + ",publish_path = " + connection.escape(publish_path) + ",pull_name = " + connection.escape(pull_name) + ",pull_size = " + connection.escape(pull_size) + ",publish_metadata_path = " + connection.escape(publish_metadata_path) + ",pulled=1,published_openapi=0  WHERE id = " + pull_id;
+    var sql1 = "UPDATE web_sources SET valid=" + connection.escape(valid) + ",body=" + connection.escape(openapi) + ",pull_path=" + connection.escape(pull_path) + ",publish_path = " + connection.escape(publish_path) + ",pull_name = " + connection.escape(pull_name) + ",pull_size = " + connection.escape(pull_size) + ",publish_metadata_path = " + connection.escape(publish_metadata_path) + ",pulled=1,published_openapi=1,published_metadata=0  WHERE id = " + pull_id;
     connection.query(sql1, function (error, results, fields) {  
       callback( null, results ); 
+      connection.end();
     });
 });

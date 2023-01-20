@@ -16,5 +16,6 @@ exports.handler = vandium.generic()
     var sql1 = "UPDATE github_targets SET published_metadata=1  WHERE id = " + pull_id;
     connection.query(sql1, function (error, results, fields) {  
       callback( null, results ); 
+      connection.end();
     });
 });

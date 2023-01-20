@@ -84,11 +84,13 @@ exports.handler = vandium.generic()
                 var response = {};
                 response.insert = 0
                 callback( null, response);
+                connection.end();
               }
               else{
                 var response = {};
                 response.insert = inserted_results;
                 callback( null, response );
+                connection.end();
                 }
                 
               }); 
@@ -101,6 +103,7 @@ exports.handler = vandium.generic()
           connection.query(search_sql, function (error, result, fields) {            
             console.log("2");
             callback( null, "Nothing to INSERT" );
+            connection.end();
           });
         }
       

@@ -24,5 +24,6 @@ exports.handler = vandium.generic()
     var sql1 = "UPDATE github_targets SET body=" + connection.escape(openapi) + ",pull_path=" + connection.escape(pull_path) + ",publish_path = " + connection.escape(publish_path) + ",pull_name = " + connection.escape(pull_name) + ",pull_size = " + connection.escape(pull_size) + ",publish_metadata_path = " + connection.escape(publish_metadata_path) + ",pulled=1,published_openapi=0  WHERE id = " + pull_id;
     connection.query(sql1, function (error, results, fields) {  
       callback( null, results ); 
+      connection.end();
     });
 });

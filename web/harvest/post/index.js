@@ -69,11 +69,13 @@ exports.handler = vandium.generic()
                 var response = {};
                 response.insert = 0
                 callback( null, response);
+                connection.end();
               }
               else{
                 var response = {};
                 response.insert = 1;
                 callback( null, response );
+                connection.end();
                 }
                 
               }); 
@@ -82,6 +84,7 @@ exports.handler = vandium.generic()
           }
         else{
           callback( null, "Nothing to INSERT" );
+          connection.end();
         }
       
     });
