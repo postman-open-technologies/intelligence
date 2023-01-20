@@ -13,8 +13,8 @@ exports.handler = vandium.generic()
 
     var pull_id = event.pull_id;
 
-    var sql1 = "UPDATE github_targets SET body='',published_openapi=1  WHERE id = " + pull_id;
+    var sql1 = "UPDATE github_targets SET body='', published_openapi=1, published_metadata=0 WHERE id = " + pull_id;
     connection.query(sql1, function (error, results, fields) {  
-      callback( null, results ); 
+      callback( null, sql1 ); 
     });
 });
