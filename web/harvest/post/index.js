@@ -62,7 +62,7 @@ exports.handler = vandium.generic()
           sql = sql_begin + sql;
           connection.query(sql, function (error, insertResult, fields) {  
             
-            var search_sql = 'UPDATE web_targets SET pulled = 1 WHERE id = " + pull_id';
+            var search_sql = 'UPDATE web_targets SET pulled = 1 WHERE id = " + pull_id;
             console.log(search_sql);
             connection.query(search_sql, function (error, result, fields) {              
               if(error){
